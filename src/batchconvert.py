@@ -78,6 +78,12 @@ AP_ARGUMENTS = [
 ]
 
 
+def write_log(message='', mode='a'):
+    print message
+    with open(output_log, mode) as log:
+        log.write(message + '\n')
+
+
 class Format(Enum):
     ALL = 0
     PHOTO = 1
@@ -89,41 +95,48 @@ class ImageSize(object):
     ULTRA_HD = {'length': 3840, 'width': 2160}
 
 
-def retrieve_list(dirpath, file_format=Format.ALL, subdirectories=True):
+def retrieve_filelist(dirpath, file_format=Format.ALL, subdirectories=True):
     filelist = []
+
+    # If we want to traverse the path AND its subdirectories, we use 'os.walk'.
     if subdirectories is True:
         for (dirpath, dirnames, filenames) in os.walk(dirpath):
             for filename in filenames:
                 file_extension = os.path.splitext(filename)[1][1:].lower()
-                if (file_format == Format.PHOTO and file_extension in input_formats_image or
-                    file_format == Format.VIDEO and file_extension in input_formats_video or
-                    file_format == Format.ALL and file_extension in input_formats_image + input_formats_video):
+                if valid_format(file_format, file_extension):
                         filelist.append(dirpath + "/" + filename)
+    # Else, we are only interested in the files in the passed dirpath.
     else:
         for item in os.listdir(dirpath):
             filename = os.path.join(dirpath, item)
             if os.path.isfile(filename):
                 file_extension = os.path.splitext(item)[1][1:].lower()
-                if (file_format == Format.PHOTO and file_extension in input_formats_image or
-                    file_format == Format.VIDEO and file_extension in input_formats_video or
-                    file_format == Format.ALL and file_extension in input_formats_image + input_formats_video):
+                if valid_format(file_format, file_extension):
                     filelist.append(dirpath + "/" + filename)
 
     return filelist
 
 
+def valid_format(file_format, extension):
+    # A file is valid if it is in the input list for its type.
+    return (file_format == Format.PHOTO and extension in input_formats_image or
+            file_format == Format.VIDEO and extension in input_formats_video or
+            file_format == Format.ALL and extension in input_formats_image + input_formats_video)
+
+
 def resize_images(input_path, output_path, subdirectories=True):
-    image_list = retrieve_list(input_path, file_format=Format.PHOTO, subdirectories=subdirectories)
+    image_list = retrieve_filelist(input_path, file_format=Format.PHOTO, subdirectories=subdirectories)
 
-    print "Number of files to resize: " + str(len(image_list))
+    message = "Number of files to resize: " + str(len(image_list))
+    write_log(message)
 
-    raw_input("Press any key to continue")
+    raw_input("\nPress any key to continue")
 
     for index, item in enumerate(image_list):
         try:
             filename = item.split('/')[-1]
             image = Image.open(item)
-            exif = image.info['exif']
+
             new_width, new_height = calculate_size(image.width, image.height,
                                                    ImageSize.ULTRA_HD['length'], ImageSize.ULTRA_HD['width'])
 
@@ -131,27 +144,29 @@ def resize_images(input_path, output_path, subdirectories=True):
             write_log(message)
 
             img_resized = image.resize((new_width, new_height), Image.ANTIALIAS)
-            img_resized.save(output_path + '/' + '4-' + filename, exif=exif)
+
+            # EXIF data: things like ISO speed, shutter speed, aperture, white balance, camera model etc.
+            exif = image.info['exif']
+            img_resized.save(output_path + '/' + filename, exif=exif)
         except Exception as e:
             message = "[{0}] Failed to resize. Message: {1}.".format(index, e.message)
             write_log(message)
 
 
-def write_log(message='', mode='a'):
-    print message
-    with open(output_log, mode) as log:
-        log.write(message + '\n')
-
-
 def calculate_size(width, height, max_length, max_width):
+    # In this context 'length' means the longest side of the image i.e. the greatest value between height
+    # & width. Implicitly this means that 'width' is the shortest side.
     orig_length = max(height, width)
     orig_width = min(height, width)
 
+    # Calculate for both the longest as the shortest side how much the resize factor should be.
     length_ratio = max_length / float(orig_length)
     width_ratio = max_width / float(orig_width)
 
+    # Choose the largest resize factor, since we would like to keep the current aspect ratio of the image.
     resize_factor = max(length_ratio, width_ratio)
     new_width, new_height = map(lambda x: resize_factor * x, (width, height))
+
     return int(new_width), int(new_height)
 
 
@@ -196,11 +211,11 @@ def run():
 
     write_log("Starting execution.", 'w')
 
-    resize_images('/media/waldo/SSD/Nikon-SDs/Kingston-MicroSD-94749-2',
-                  '/media/waldo/TRANSCEND-SSD/Photos/Sylvia/Uitzoeken-KINGSTON-SD', subdirectories=True)
+    # resize_images('/media/waldo/SSD/Nikon-SDs/Kingston-MicroSD-94749-2',
+    #               '/media/waldo/TRANSCEND-SSD/Photos/Sylvia/Uitzoeken-KINGSTON-SD', subdirectories=True)
 
-    # resize_images('/media/waldo/DATA-SHARE/Code/BatchConvert/test/input',
-    #               '/media/waldo/DATA-SHARE/Code/BatchConvert/test/output', subdirectories=True)
+    resize_images('/media/waldo/DATA-SHARE/Code/BatchConvert/test/input',
+                  '/media/waldo/DATA-SHARE/Code/BatchConvert/test/output', subdirectories=True)
     # convert_video(
     #     '/media/waldo/TRANSCEND-SSD/Film/Video/Travels/New Zealand_2016/New Zealand V - Waikato & King Country.wmv',
     #     '/tmp', 'wmv', 'mp4')
