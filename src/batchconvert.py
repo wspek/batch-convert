@@ -85,7 +85,7 @@ class CommandLineTool(object):
 
     def run(self):
         self.vargs = vars(self.parser.parse_args())
-        # self.actual_command() #TODO
+        self.actual_command()
         sys.exit(0)
 
     # overload this in your actual subclass
@@ -106,10 +106,7 @@ class CommandLineTool(object):
         print u"{0}\n{1}\n{2}".format(args, sys.stderr, kwargs)
 
 
-class ImageConverter(CommandLineTool):
-    input_formats = ['jpg', 'jpeg', 'nef']
-    output_formats = ['jpg', 'jpeg', 'nef']
-
+class ConversionTool(CommandLineTool):
     AP_PROGRAM = u"Batch convert"
     AP_DESCRIPTION = u"Convert and resize images and video's."
     AP_ARGUMENTS = [
@@ -175,6 +172,21 @@ class ImageConverter(CommandLineTool):
         # },
     ]
 
+    # def run(self):
+        # write_log("Starting execution.", 'w')
+
+        # resize_images('/media/waldo/SSD/Nikon-SDs/Kingston-MicroSD-94749-2',
+        #               '/media/waldo/TRANSCEND-SSD/Photos/Sylvia/Uitzoeken-KINGSTON-SD', subdirectories=True)
+
+        # self.resize_images('/media/waldo/DATA-SHARE/Code/BatchConvert/test/input',
+        #                    '/media/waldo/DATA-SHARE/Code/BatchConvert/test/output',
+        #                    subdirectories=True)
+
+
+class ImageConverter(object):
+    input_formats = ['jpg', 'jpeg', 'nef']
+    output_formats = ['jpg', 'jpeg', 'nef']
+
     @staticmethod
     def resize_images(input_path, output_path, subdirectories=True):
         image_list = retrieve_filelist(input_path, file_format=Format.PHOTO, subdirectories=subdirectories)
@@ -229,7 +241,7 @@ class ImageConverter(CommandLineTool):
         return file_format == Format.PHOTO and extension in ImageConverter.input_formats
 
 
-class VideoConverter(CommandLineTool):
+class VideoConverter(object):
     input_formats = ['wmv', 'mov']
     output_formats = ['mp4']
 
@@ -273,22 +285,22 @@ class VideoConverter(CommandLineTool):
         return file_format == Format.VIDEO and extension in VideoConverter.input_formats_image
 
 
-def run():
-    write_log("Starting execution.", 'w')
-
-    # resize_images('/media/waldo/SSD/Nikon-SDs/Kingston-MicroSD-94749-2',
-    #               '/media/waldo/TRANSCEND-SSD/Photos/Sylvia/Uitzoeken-KINGSTON-SD', subdirectories=True)
-
-    ImageConverter().resize_images('/media/waldo/DATA-SHARE/Code/BatchConvert/test/input',
-                                   '/media/waldo/DATA-SHARE/Code/BatchConvert/test/output',
-                                   subdirectories=True)
-    # convert_video(
-    #     '/media/waldo/TRANSCEND-SSD/Film/Video/Travels/New Zealand_2016/New Zealand V - Waikato & King Country.wmv',
-    #     '/tmp', 'wmv', 'mp4')
+# def run():
+#     write_log("Starting execution.", 'w')
+#
+#     # resize_images('/media/waldo/SSD/Nikon-SDs/Kingston-MicroSD-94749-2',
+#     #               '/media/waldo/TRANSCEND-SSD/Photos/Sylvia/Uitzoeken-KINGSTON-SD', subdirectories=True)
+#
+#     ImageConverter().resize_images('/media/waldo/DATA-SHARE/Code/BatchConvert/test/input',
+#                                    '/media/waldo/DATA-SHARE/Code/BatchConvert/test/output',
+#                                    subdirectories=True)
+#     # convert_video(
+#     #     '/media/waldo/TRANSCEND-SSD/Film/Video/Travels/New Zealand_2016/New Zealand V - Waikato & King Country.wmv',
+#     #     '/tmp', 'wmv', 'mp4')
 
 
 def main():
-    run()
+    ConversionTool().run()
 
 
 if __name__ == '__main__':
