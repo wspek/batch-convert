@@ -4,13 +4,8 @@ import argparse
 from enum import Enum
 from PIL import Image
 
+
 output_log = '/media/waldo/DATA-SHARE/Code/BatchConvert/output/output.log'
-
-
-input_formats_image = ['jpg', 'jpeg', 'nef']
-output_formats_image = ['jpg', 'jpeg', 'nef']
-input_formats_video = ['wmv', 'mov']
-output_formats_video = ['mp4']
 
 
 class Format(Enum):
@@ -30,13 +25,6 @@ def write_log(message='', mode='a'):
         log.write(message + '\n')
 
 
-def valid_format(file_format, extension):
-    # A file is valid if it is in the input list for its type.
-    return (file_format == Format.PHOTO and extension in input_formats_image or
-            file_format == Format.VIDEO and extension in input_formats_video or
-            file_format == Format.ALL and extension in input_formats_image + input_formats_video)
-
-
 def retrieve_filelist(dirpath, file_format=Format.ALL, subdirectories=True):
     filelist = []
 
@@ -44,16 +32,16 @@ def retrieve_filelist(dirpath, file_format=Format.ALL, subdirectories=True):
     if subdirectories is True:
         for (dirpath, dirnames, filenames) in os.walk(dirpath):
             for filename in filenames:
-                file_extension = os.path.splitext(filename)[1][1:].lower()
-                if valid_format(file_format, file_extension):
+                # file_extension = os.path.splitext(filename)[1][1:].lower()
+                # if valid_format(file_format, file_extension):
                         filelist.append(dirpath + "/" + filename)
     # Else, we are only interested in the files in the passed dirpath.
     else:
         for item in os.listdir(dirpath):
             filename = os.path.join(dirpath, item)
             if os.path.isfile(filename):
-                file_extension = os.path.splitext(item)[1][1:].lower()
-                if valid_format(file_format, file_extension):
+                # file_extension = os.path.splitext(item)[1][1:].lower()
+                # if valid_format(file_format, file_extension):
                     filelist.append(dirpath + "/" + filename)
 
     return filelist
@@ -119,6 +107,9 @@ class CommandLineTool(object):
 
 
 class ImageConverter(CommandLineTool):
+    input_formats = ['jpg', 'jpeg', 'nef']
+    output_formats = ['jpg', 'jpeg', 'nef']
+
     AP_PROGRAM = u"Batch convert"
     AP_DESCRIPTION = u"Convert and resize images and video's."
     AP_ARGUMENTS = [
@@ -232,46 +223,57 @@ class ImageConverter(CommandLineTool):
 
         return int(new_width), int(new_height)
 
+    @staticmethod
+    def valid_format(file_format, extension):
+        # A file is valid if it is in the input list for its type.
+        return file_format == Format.PHOTO and extension in ImageConverter.input_formats
 
-def convert_video(input_path, output_folder, input_format, output_format):
-    # First check whether the requested conversion formats are valid. If not, notify user and return.
-    if input_format not in input_formats_video or output_format not in output_formats_video:
-        print "Conversion from '" + input_format + "' to '" + output_format + "' not possible.",
 
-        # Print all possible allowed conversion formats to screen.
-        conversions = ((i, o) for i in input_formats_video for o in output_formats_video)
-        print "Possible conversions:\n"
-        for i, o in conversions:
-            print i + " -> " + o
-        return
-    # If the input file or folder (path) is invalid, notify the user and return.
-    if not os.path.exists(input_path):
-        print "The path '" + input_path + "' does not seem to exist. Please retry with a valid path."
-        return
-    # If the input path is a directory, list all the video files in the directory for conversion.
-    if os.path.isdir(input_path):
-        inputfiles = [os.path.splitext(f)[0] for f in os.listdir(input_path) if
-                      os.path.splitext(f.lower())[1][1:] in input_formats_video]
+class VideoConverter(CommandLineTool):
+    input_formats = ['wmv', 'mov']
+    output_formats = ['mp4']
 
-        for f in inputfiles:
-            os.system('ffmpeg -i "%s/%s.%s" -c:v:1 copy -strict -2 "%s/%s.%s"' % (
-                input_path, f, input_format, output_folder, f, output_format))
-    # If the input path is a file, then store this as an only element in the list to convert.
-    elif os.path.isfile(input_path):
-        if os.path.splitext(input_path.lower())[1][1:] in input_formats_video:
-            inputfile = os.path.splitext(input_path)[0]
-            file_name = inputfile.split('/')[-1]
-        os.system('ffmpeg -i "%s.%s" -c:v:1 copy -strict -2 "%s/%s.%s"' % (
-            inputfile, input_format, output_folder, file_name, output_format))
+    @staticmethod
+    def convert_video(input_path, output_folder, input_format, output_format):
+        # First check whether the requested conversion formats are valid. If not, notify user and return.
+        if input_format not in VideoConverter.input_formats or \
+           output_format not in VideoConverter.output_formats:
+            print "Conversion from '" + input_format + "' to '" + output_format + "' not possible.",
+
+            # Print all possible allowed conversion formats to screen.
+            conversions = ((i, o) for i in VideoConverter.input_formats for
+                           o in VideoConverter.output_formats)
+            print "Possible conversions:\n"
+            for i, o in conversions:
+                print i + " -> " + o
+            return
+        # If the input file or folder (path) is invalid, notify the user and return.
+        if not os.path.exists(input_path):
+            print "The path '" + input_path + "' does not seem to exist. Please retry with a valid path."
+            return
+        # If the input path is a directory, list all the video files in the directory for conversion.
+        if os.path.isdir(input_path):
+            inputfiles = [os.path.splitext(f)[0] for f in os.listdir(input_path) if
+                          os.path.splitext(f.lower())[1][1:] in VideoConverter.input_formats]
+
+            for f in inputfiles:
+                os.system('ffmpeg -i "%s/%s.%s" -c:v:1 copy -strict -2 "%s/%s.%s"' % (
+                    input_path, f, input_format, output_folder, f, output_format))
+        # If the input path is a file, then store this as an only element in the list to convert.
+        elif os.path.isfile(input_path):
+            if os.path.splitext(input_path.lower())[1][1:] in VideoConverter.input_formats:
+                inputfile = os.path.splitext(input_path)[0]
+                file_name = inputfile.split('/')[-1]
+            os.system('ffmpeg -i "%s.%s" -c:v:1 copy -strict -2 "%s/%s.%s"' % (
+                inputfile, input_format, output_folder, file_name, output_format))
+
+    @staticmethod
+    def valid_format(file_format, extension):
+        # A file is valid if it is in the input list for its type.
+        return file_format == Format.VIDEO and extension in VideoConverter.input_formats_image
 
 
 def run():
-    # parser = argparse.ArgumentParser(
-    #     AP_PROGRAM,
-    #     AP_DESCRIPTION
-    # )
-    # parser.parse_args()
-
     write_log("Starting execution.", 'w')
 
     # resize_images('/media/waldo/SSD/Nikon-SDs/Kingston-MicroSD-94749-2',
