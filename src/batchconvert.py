@@ -46,143 +46,6 @@ def retrieve_filelist(dirpath, file_format=Format.ALL, subdirectories=True):
 
     return filelist
 
-
-class CommandLineTool(object):
-    # overload in the actual subclass
-    #
-    AP_PROGRAM = sys.argv[0]
-    AP_DESCRIPTION = u"Generic Command Line Tool"
-    AP_ARGUMENTS = [
-        # required args
-        # {"name": "foo", "nargs": 1, "type": str, "default": "baz", "help": "Foo help"},
-        #
-        # optional args
-        # {"name": "--bar", "nargs": "?", "type": str,, "default": "foofoofoo", "help": "Bar help"},
-        # {"name": "--quiet", "action": "store_true", "help": "Do not output to stdout"},
-    ]
-
-    def __init__(self):
-        self.parser = argparse.ArgumentParser(
-            prog=self.AP_PROGRAM,
-            description=self.AP_DESCRIPTION
-        )
-        self.vargs = None
-        for arg in self.AP_ARGUMENTS:
-            if "action" in arg:
-                self.parser.add_argument(
-                    arg["name"],
-                    action=arg["action"],
-                    help=arg["help"]
-                )
-            else:
-                self.parser.add_argument(
-                    arg["name"],
-                    nargs=arg["nargs"],
-                    type=arg["type"],
-                    default=arg["default"],
-                    help=arg["help"]
-                )
-
-    def run(self):
-        self.vargs = vars(self.parser.parse_args())
-        self.actual_command()
-        sys.exit(0)
-
-    # overload this in your actual subclass
-    def actual_command(self):
-        self.print_stdout(u"This script does nothing. Invoke another .py")
-
-    @staticmethod
-    def error(message):
-        print u"ERROR: {0}".format(message)
-        sys.exit(1)
-
-    @staticmethod
-    def print_stdout(*args, **kwargs):
-        print u"{0}\n{1}".format(args, kwargs)
-
-    @staticmethod
-    def print_stderr(*args, **kwargs):
-        print u"{0}\n{1}\n{2}".format(args, sys.stderr, kwargs)
-
-
-class ConversionTool(CommandLineTool):
-    AP_PROGRAM = u"Batch convert"
-    AP_DESCRIPTION = u"Convert and resize images and video's."
-    AP_ARGUMENTS = [
-        {
-            "name": "file",
-            "nargs": '*',
-            "type": str,
-            "default": None,
-            "help": "One or more input files"
-        },
-        # {
-        #     "name": "--output",
-        #     "nargs": "?",
-        #     "type": str,
-        #     "default": None,
-        #     "help": "Output to file instead of using the standard output"
-        # },
-        # {
-        #     "name": "--csv",
-        #     "action": "store_true",
-        #     "help": "Output in CSV format instead of human-readable format"
-        # },
-        # {
-        #     "name": "--pdf",
-        #     "nargs": "?",
-        #     "type": str,
-        #     "default": None,
-        #     "help": "Output to PDF"
-        # },
-        # {
-        #     "name": "--list",
-        #     "action": "store_true",
-        #     "help": "List the titles of books with annotations or highlights"
-        # },
-        # {
-        #     "name": "--book",
-        #     "nargs": "?",
-        #     "type": str,
-        #     "default": None,
-        #     "help": "Output annotations and highlights only from the book with the given title"
-        # },
-        # {
-        #     "name": "--bookid",
-        #     "nargs": "?",
-        #     "type": str,
-        #     "default": None,
-        #     "help": "Output annotations and highlights only from the book with the given ID"
-        # },
-        # {
-        #     "name": "--annotations-only",
-        #     "action": "store_true",
-        #     "help": "Outputs annotations only, excluding highlights"
-        # },
-        # {
-        #     "name": "--highlights-only",
-        #     "action": "store_true",
-        #     "help": "Outputs highlights only, excluding annotations"
-        # },
-        # {
-        #     "name": "--info",
-        #     "action": "store_true",
-        #     "help": "Print information about the number of annotations and highlights"
-        # },
-    ]
-
-    # def run(self):
-        # write_log("Starting execution.", 'w')
-
-        # resize_images('/media/waldo/SSD/Nikon-SDs/Kingston-MicroSD-94749-2',
-        #               '/media/waldo/TRANSCEND-SSD/Photos/Sylvia/Uitzoeken-KINGSTON-SD', subdirectories=True)
-
-        # self.resize_images('/media/waldo/DATA-SHARE/Code/BatchConvert/test/input',
-        #                    '/media/waldo/DATA-SHARE/Code/BatchConvert/test/output',
-        #                    subdirectories=True)
-
-
 class ImageConverter(object):
     input_formats = ['jpg', 'jpeg', 'nef']
     output_formats = ['jpg', 'jpeg', 'nef']
@@ -283,6 +146,175 @@ class VideoConverter(object):
     def valid_format(file_format, extension):
         # A file is valid if it is in the input list for its type.
         return file_format == Format.VIDEO and extension in VideoConverter.input_formats_image
+
+
+class CommandLineTool(object):
+    # overload in the actual subclass
+    #
+    AP_PROGRAM = sys.argv[0]
+    AP_DESCRIPTION = u"Generic Command Line Tool"
+    AP_ARGUMENTS = [
+        # required args
+        # {"name": "foo", "nargs": 1, "type": str, "default": "baz", "help": "Foo help"},
+        #
+        # optional args
+        # {"name": "--bar", "nargs": "?", "type": str,, "default": "foofoofoo", "help": "Bar help"},
+        # {"name": "--quiet", "action": "store_true", "help": "Do not output to stdout"},
+    ]
+
+    def __init__(self):
+        self.parser = argparse.ArgumentParser(
+            prog=self.AP_PROGRAM,
+            description=self.AP_DESCRIPTION,
+            formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=32)
+        )
+        self.vargs = None
+        for arg in self.AP_ARGUMENTS:
+            if "action" in arg:
+                self.parser.add_argument(
+                    arg["name"],
+                    action=arg["action"],
+                    help=arg["help"]
+                )
+            elif "choices" in arg:
+                self.parser.add_argument(
+                    arg["name"],
+                    nargs=arg["nargs"],
+                    type=arg["type"],
+                    default=arg["default"],
+                    choices=arg["choices"],
+                    help=arg["help"],
+                )
+            else:
+                self.parser.add_argument(
+                    arg["name"],
+                    nargs=arg["nargs"],
+                    type=arg["type"],
+                    default=arg["default"],
+                    help=arg["help"],
+                )
+
+    def run(self):
+        self.vargs = vars(self.parser.parse_args())
+        self.actual_command()
+        sys.exit(0)
+
+    # overload this in your actual subclass
+    def actual_command(self):
+        self.print_stdout(u"This script does nothing. Invoke another .py")
+
+    @staticmethod
+    def error(message):
+        print u"ERROR: {0}".format(message)
+        sys.exit(1)
+
+    @staticmethod
+    def print_stdout(*args, **kwargs):
+        print u"{0}\n{1}".format(args, kwargs)
+
+    @staticmethod
+    def print_stderr(*args, **kwargs):
+        print u"{0}\n{1}\n{2}".format(args, sys.stderr, kwargs)
+
+
+class ConversionTool(CommandLineTool):
+    formats = ImageConverter.output_formats + VideoConverter.output_formats
+
+    AP_PROGRAM = u"Batch convert"
+    AP_DESCRIPTION = u"Convert and resize images and video's."
+    AP_ARGUMENTS = [
+        {
+            "name": "output",
+            "nargs": None,
+            "type": str,
+            "default": None,
+            "help": "Output folder"
+        },
+        {
+            "name": "--file",
+            "nargs": '*',
+            "type": str,
+            "default": None,
+            "help": "One or more input files"
+        },
+        {
+            "name": "--input",
+            "nargs": '?',
+            "type": str,
+            "default": None,
+            "help": "Input folder"
+        },
+        {
+            "name": "--format",
+            "nargs": 1,
+            "type": str,
+            "default": None,
+            "help": "Output format after conversion",
+            "choices": formats
+        },
+        # {
+        #     "name": "--resize",
+        #     "nargs": 2,
+        #     "type": int,
+        #     "default": None,
+        #     "help": "Output size",
+        #     "metavars": ("LENGTH", "WIDTH")
+        # },
+        # {
+        #     "name": "--pdf",
+        #     "nargs": "?",
+        #     "type": str,
+        #     "default": None,
+        #     "help": "Output to PDF"
+        # },
+        # {
+        #     "name": "--list",
+        #     "action": "store_true",
+        #     "help": "List the titles of books with annotations or highlights"
+        # },
+        # {
+        #     "name": "--book",
+        #     "nargs": "?",
+        #     "type": str,
+        #     "default": None,
+        #     "help": "Output annotations and highlights only from the book with the given title"
+        # },
+        # {
+        #     "name": "--bookid",
+        #     "nargs": "?",
+        #     "type": str,
+        #     "default": None,
+        #     "help": "Output annotations and highlights only from the book with the given ID"
+        # },
+        # {
+        #     "name": "--annotations-only",
+        #     "action": "store_true",
+        #     "help": "Outputs annotations only, excluding highlights"
+        # },
+        # {
+        #     "name": "--highlights-only",
+        #     "action": "store_true",
+        #     "help": "Outputs highlights only, excluding annotations"
+        # },
+        # {
+        #     "name": "--info",
+        #     "action": "store_true",
+        #     "help": "Print information about the number of annotations and highlights"
+        # },
+    ]
+
+    def actual_command(self):
+        pass
+
+        # def run(self):
+        # write_log("Starting execution.", 'w')
+
+        # resize_images('/media/waldo/SSD/Nikon-SDs/Kingston-MicroSD-94749-2',
+        #               '/media/waldo/TRANSCEND-SSD/Photos/Sylvia/Uitzoeken-KINGSTON-SD', subdirectories=True)
+
+        # self.resize_images('/media/waldo/DATA-SHARE/Code/BatchConvert/test/input',
+        #                    '/media/waldo/DATA-SHARE/Code/BatchConvert/test/output',
+        #                    subdirectories=True)
 
 
 # def run():
