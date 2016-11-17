@@ -1,5 +1,5 @@
+import sys
 import os
-import filesync
 import argparse
 from enum import Enum
 from PIL import Image
@@ -12,77 +12,6 @@ output_formats_image = ['jpg', 'jpeg', 'nef']
 input_formats_video = ['wmv', 'mov']
 output_formats_video = ['mp4']
 
-AP_PROGRAM = u"Batch convert"
-AP_DESCRIPTION = u"Convert and resize images and video's."
-AP_ARGUMENTS = [
-    {
-        "name": "file",
-        "nargs": '*',
-        "type": str,
-        "default": None,
-        "help": "One or more input files"
-    },
-    # {
-    #     "name": "--output",
-    #     "nargs": "?",
-    #     "type": str,
-    #     "default": None,
-    #     "help": "Output to file instead of using the standard output"
-    # },
-    # {
-    #     "name": "--csv",
-    #     "action": "store_true",
-    #     "help": "Output in CSV format instead of human-readable format"
-    # },
-    # {
-    #     "name": "--pdf",
-    #     "nargs": "?",
-    #     "type": str,
-    #     "default": None,
-    #     "help": "Output to PDF"
-    # },
-    # {
-    #     "name": "--list",
-    #     "action": "store_true",
-    #     "help": "List the titles of books with annotations or highlights"
-    # },
-    # {
-    #     "name": "--book",
-    #     "nargs": "?",
-    #     "type": str,
-    #     "default": None,
-    #     "help": "Output annotations and highlights only from the book with the given title"
-    # },
-    # {
-    #     "name": "--bookid",
-    #     "nargs": "?",
-    #     "type": str,
-    #     "default": None,
-    #     "help": "Output annotations and highlights only from the book with the given ID"
-    # },
-    # {
-    #     "name": "--annotations-only",
-    #     "action": "store_true",
-    #     "help": "Outputs annotations only, excluding highlights"
-    # },
-    # {
-    #     "name": "--highlights-only",
-    #     "action": "store_true",
-    #     "help": "Outputs highlights only, excluding annotations"
-    # },
-    # {
-    #     "name": "--info",
-    #     "action": "store_true",
-    #     "help": "Print information about the number of annotations and highlights"
-    # },
-]
-
-
-def write_log(message='', mode='a'):
-    print message
-    with open(output_log, mode) as log:
-        log.write(message + '\n')
-
 
 class Format(Enum):
     ALL = 0
@@ -93,6 +22,19 @@ class Format(Enum):
 class ImageSize(object):
     HD = {'length': 1920, 'width': 1080}
     ULTRA_HD = {'length': 3840, 'width': 2160}
+
+
+def write_log(message='', mode='a'):
+    print message
+    with open(output_log, mode) as log:
+        log.write(message + '\n')
+
+
+def valid_format(file_format, extension):
+    # A file is valid if it is in the input list for its type.
+    return (file_format == Format.PHOTO and extension in input_formats_image or
+            file_format == Format.VIDEO and extension in input_formats_video or
+            file_format == Format.ALL and extension in input_formats_image + input_formats_video)
 
 
 def retrieve_filelist(dirpath, file_format=Format.ALL, subdirectories=True):
@@ -117,57 +59,178 @@ def retrieve_filelist(dirpath, file_format=Format.ALL, subdirectories=True):
     return filelist
 
 
-def valid_format(file_format, extension):
-    # A file is valid if it is in the input list for its type.
-    return (file_format == Format.PHOTO and extension in input_formats_image or
-            file_format == Format.VIDEO and extension in input_formats_video or
-            file_format == Format.ALL and extension in input_formats_image + input_formats_video)
+class CommandLineTool(object):
+    # overload in the actual subclass
+    #
+    AP_PROGRAM = sys.argv[0]
+    AP_DESCRIPTION = u"Generic Command Line Tool"
+    AP_ARGUMENTS = [
+        # required args
+        # {"name": "foo", "nargs": 1, "type": str, "default": "baz", "help": "Foo help"},
+        #
+        # optional args
+        # {"name": "--bar", "nargs": "?", "type": str,, "default": "foofoofoo", "help": "Bar help"},
+        # {"name": "--quiet", "action": "store_true", "help": "Do not output to stdout"},
+    ]
+
+    def __init__(self):
+        self.parser = argparse.ArgumentParser(
+            prog=self.AP_PROGRAM,
+            description=self.AP_DESCRIPTION
+        )
+        self.vargs = None
+        for arg in self.AP_ARGUMENTS:
+            if "action" in arg:
+                self.parser.add_argument(
+                    arg["name"],
+                    action=arg["action"],
+                    help=arg["help"]
+                )
+            else:
+                self.parser.add_argument(
+                    arg["name"],
+                    nargs=arg["nargs"],
+                    type=arg["type"],
+                    default=arg["default"],
+                    help=arg["help"]
+                )
+
+    def run(self):
+        self.vargs = vars(self.parser.parse_args())
+        # self.actual_command() #TODO
+        sys.exit(0)
+
+    # overload this in your actual subclass
+    def actual_command(self):
+        self.print_stdout(u"This script does nothing. Invoke another .py")
+
+    @staticmethod
+    def error(message):
+        print u"ERROR: {0}".format(message)
+        sys.exit(1)
+
+    @staticmethod
+    def print_stdout(*args, **kwargs):
+        print u"{0}\n{1}".format(args, kwargs)
+
+    @staticmethod
+    def print_stderr(*args, **kwargs):
+        print u"{0}\n{1}\n{2}".format(args, sys.stderr, kwargs)
 
 
-def resize_images(input_path, output_path, subdirectories=True):
-    image_list = retrieve_filelist(input_path, file_format=Format.PHOTO, subdirectories=subdirectories)
+class ImageConverter(CommandLineTool):
+    AP_PROGRAM = u"Batch convert"
+    AP_DESCRIPTION = u"Convert and resize images and video's."
+    AP_ARGUMENTS = [
+        {
+            "name": "file",
+            "nargs": '*',
+            "type": str,
+            "default": None,
+            "help": "One or more input files"
+        },
+        # {
+        #     "name": "--output",
+        #     "nargs": "?",
+        #     "type": str,
+        #     "default": None,
+        #     "help": "Output to file instead of using the standard output"
+        # },
+        # {
+        #     "name": "--csv",
+        #     "action": "store_true",
+        #     "help": "Output in CSV format instead of human-readable format"
+        # },
+        # {
+        #     "name": "--pdf",
+        #     "nargs": "?",
+        #     "type": str,
+        #     "default": None,
+        #     "help": "Output to PDF"
+        # },
+        # {
+        #     "name": "--list",
+        #     "action": "store_true",
+        #     "help": "List the titles of books with annotations or highlights"
+        # },
+        # {
+        #     "name": "--book",
+        #     "nargs": "?",
+        #     "type": str,
+        #     "default": None,
+        #     "help": "Output annotations and highlights only from the book with the given title"
+        # },
+        # {
+        #     "name": "--bookid",
+        #     "nargs": "?",
+        #     "type": str,
+        #     "default": None,
+        #     "help": "Output annotations and highlights only from the book with the given ID"
+        # },
+        # {
+        #     "name": "--annotations-only",
+        #     "action": "store_true",
+        #     "help": "Outputs annotations only, excluding highlights"
+        # },
+        # {
+        #     "name": "--highlights-only",
+        #     "action": "store_true",
+        #     "help": "Outputs highlights only, excluding annotations"
+        # },
+        # {
+        #     "name": "--info",
+        #     "action": "store_true",
+        #     "help": "Print information about the number of annotations and highlights"
+        # },
+    ]
 
-    message = "Number of files to resize: " + str(len(image_list))
-    write_log(message)
+    @staticmethod
+    def resize_images(input_path, output_path, subdirectories=True):
+        image_list = retrieve_filelist(input_path, file_format=Format.PHOTO, subdirectories=subdirectories)
 
-    raw_input("\nPress any key to continue")
+        message = "Number of files to resize: " + str(len(image_list))
+        write_log(message)
 
-    for index, item in enumerate(image_list):
-        try:
-            filename = item.split('/')[-1]
-            image = Image.open(item)
+        raw_input("\nPress any key to continue...\n")
 
-            new_width, new_height = calculate_size(image.width, image.height,
-                                                   ImageSize.ULTRA_HD['length'], ImageSize.ULTRA_HD['width'])
+        for index, item in enumerate(image_list):
+            try:
+                filename = item.split('/')[-1]
+                image = Image.open(item)
 
-            message = "[" + str(index) + "] Resizing and saving file: '" + filename + "'."
-            write_log(message)
+                new_width, new_height = ImageConverter.calculate_size(
+                                                            image.width, image.height,
+                                                            ImageSize.ULTRA_HD['length'],
+                                                            ImageSize.ULTRA_HD['width'])
 
-            img_resized = image.resize((new_width, new_height), Image.ANTIALIAS)
+                message = "[" + str(index) + "] Resizing and saving file: '" + filename + "'."
+                write_log(message)
 
-            # EXIF data: things like ISO speed, shutter speed, aperture, white balance, camera model etc.
-            exif = image.info['exif']
-            img_resized.save(output_path + '/' + filename, exif=exif)
-        except Exception as e:
-            message = "[{0}] Failed to resize. Message: {1}.".format(index, e.message)
-            write_log(message)
+                img_resized = image.resize((new_width, new_height), Image.ANTIALIAS)
 
+                # EXIF data: things like ISO speed, shutter speed, aperture, white balance, camera model etc.
+                exif = image.info['exif']
+                img_resized.save(output_path + '/' + filename, exif=exif)
+            except Exception as e:
+                message = "[{0}] Failed to resize. Message: {1}.".format(index, e.message)
+                write_log(message)
 
-def calculate_size(width, height, max_length, max_width):
-    # In this context 'length' means the longest side of the image i.e. the greatest value between height
-    # & width. Implicitly this means that 'width' is the shortest side.
-    orig_length = max(height, width)
-    orig_width = min(height, width)
+    @staticmethod
+    def calculate_size(width, height, max_length, max_width):
+        # In this context 'length' means the longest side of the image i.e. the greatest value between height
+        # & width. Implicitly this means that 'width' is the shortest side.
+        orig_length = max(height, width)
+        orig_width = min(height, width)
 
-    # Calculate for both the longest as the shortest side how much the resize factor should be.
-    length_ratio = max_length / float(orig_length)
-    width_ratio = max_width / float(orig_width)
+        # Calculate for both the longest as the shortest side how much the resize factor should be.
+        length_ratio = max_length / float(orig_length)
+        width_ratio = max_width / float(orig_width)
 
-    # Choose the largest resize factor, since we would like to keep the current aspect ratio of the image.
-    resize_factor = max(length_ratio, width_ratio)
-    new_width, new_height = map(lambda x: resize_factor * x, (width, height))
+        # Choose the largest resize factor, since we would like to keep the current aspect ratio of the image.
+        resize_factor = max(length_ratio, width_ratio)
+        new_width, new_height = map(lambda x: resize_factor * x, (width, height))
 
-    return int(new_width), int(new_height)
+        return int(new_width), int(new_height)
 
 
 def convert_video(input_path, output_folder, input_format, output_format):
@@ -203,19 +266,20 @@ def convert_video(input_path, output_folder, input_format, output_format):
 
 
 def run():
-    parser = argparse.ArgumentParser(
-        AP_PROGRAM,
-        AP_DESCRIPTION
-    )
-    parser.parse_args()
+    # parser = argparse.ArgumentParser(
+    #     AP_PROGRAM,
+    #     AP_DESCRIPTION
+    # )
+    # parser.parse_args()
 
     write_log("Starting execution.", 'w')
 
     # resize_images('/media/waldo/SSD/Nikon-SDs/Kingston-MicroSD-94749-2',
     #               '/media/waldo/TRANSCEND-SSD/Photos/Sylvia/Uitzoeken-KINGSTON-SD', subdirectories=True)
 
-    resize_images('/media/waldo/DATA-SHARE/Code/BatchConvert/test/input',
-                  '/media/waldo/DATA-SHARE/Code/BatchConvert/test/output', subdirectories=True)
+    ImageConverter().resize_images('/media/waldo/DATA-SHARE/Code/BatchConvert/test/input',
+                                   '/media/waldo/DATA-SHARE/Code/BatchConvert/test/output',
+                                   subdirectories=True)
     # convert_video(
     #     '/media/waldo/TRANSCEND-SSD/Film/Video/Travels/New Zealand_2016/New Zealand V - Waikato & King Country.wmv',
     #     '/tmp', 'wmv', 'mp4')

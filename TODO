@@ -1,4 +1,4 @@
-- Replace logging and message formatting.
+X Replace logging and message formatting.
 - Convert into using classes.
 - Add argparser
     - Really think about functionality
