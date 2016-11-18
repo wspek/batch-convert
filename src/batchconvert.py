@@ -46,6 +46,7 @@ def retrieve_filelist(dirpath, file_format=Format.ALL, subdirectories=True):
 
     return filelist
 
+
 class ImageConverter(object):
     input_formats = ['jpg', 'jpeg', 'nef']
     output_formats = ['jpg', 'jpeg', 'nef']
@@ -169,30 +170,10 @@ class CommandLineTool(object):
             formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=32)
         )
         self.vargs = None
+
         for arg in self.AP_ARGUMENTS:
-            if "action" in arg:
-                self.parser.add_argument(
-                    arg["name"],
-                    action=arg["action"],
-                    help=arg["help"]
-                )
-            elif "choices" in arg:
-                self.parser.add_argument(
-                    arg["name"],
-                    nargs=arg["nargs"],
-                    type=arg["type"],
-                    default=arg["default"],
-                    choices=arg["choices"],
-                    help=arg["help"],
-                )
-            else:
-                self.parser.add_argument(
-                    arg["name"],
-                    nargs=arg["nargs"],
-                    type=arg["type"],
-                    default=arg["default"],
-                    help=arg["help"],
-                )
+            name = arg.pop("name")
+            self.parser.add_argument(name, **arg)
 
     def run(self):
         self.vargs = vars(self.parser.parse_args())
@@ -252,55 +233,14 @@ class ConversionTool(CommandLineTool):
             "help": "Output format after conversion",
             "choices": formats
         },
-        # {
-        #     "name": "--resize",
-        #     "nargs": 2,
-        #     "type": int,
-        #     "default": None,
-        #     "help": "Output size",
-        #     "metavars": ("LENGTH", "WIDTH")
-        # },
-        # {
-        #     "name": "--pdf",
-        #     "nargs": "?",
-        #     "type": str,
-        #     "default": None,
-        #     "help": "Output to PDF"
-        # },
-        # {
-        #     "name": "--list",
-        #     "action": "store_true",
-        #     "help": "List the titles of books with annotations or highlights"
-        # },
-        # {
-        #     "name": "--book",
-        #     "nargs": "?",
-        #     "type": str,
-        #     "default": None,
-        #     "help": "Output annotations and highlights only from the book with the given title"
-        # },
-        # {
-        #     "name": "--bookid",
-        #     "nargs": "?",
-        #     "type": str,
-        #     "default": None,
-        #     "help": "Output annotations and highlights only from the book with the given ID"
-        # },
-        # {
-        #     "name": "--annotations-only",
-        #     "action": "store_true",
-        #     "help": "Outputs annotations only, excluding highlights"
-        # },
-        # {
-        #     "name": "--highlights-only",
-        #     "action": "store_true",
-        #     "help": "Outputs highlights only, excluding annotations"
-        # },
-        # {
-        #     "name": "--info",
-        #     "action": "store_true",
-        #     "help": "Print information about the number of annotations and highlights"
-        # },
+        {
+            "name": "--resize",
+            "nargs": 2,
+            "type": int,
+            "default": None,
+            "help": "Output size",
+            # "metavars": ("LENGTH", "WIDTH")
+        },
     ]
 
     def actual_command(self):
