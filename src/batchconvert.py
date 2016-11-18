@@ -170,7 +170,6 @@ class CommandLineTool(object):
             formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=32)
         )
         self.vargs = None
-
         for arg in self.AP_ARGUMENTS:
             name = arg.pop("name")
             self.parser.add_argument(name, **arg)
@@ -205,11 +204,24 @@ class ConversionTool(CommandLineTool):
     AP_DESCRIPTION = u"Convert and resize images and video's."
     AP_ARGUMENTS = [
         {
-            "name": "output",
+            "name": "FOLDER",
             "nargs": None,
             "type": str,
             "default": None,
             "help": "Output folder"
+        },
+        {
+            "name": "--input",
+            "nargs": '?',
+            "type": str,
+            "default": None,
+            "help": "Input folder",
+            "metavar": "FOLDER"
+        },
+        {
+            "name": "-r",
+            "action": "store_true",
+            "help": "Include subfolders"
         },
         {
             "name": "--file",
@@ -217,13 +229,6 @@ class ConversionTool(CommandLineTool):
             "type": str,
             "default": None,
             "help": "One or more input files"
-        },
-        {
-            "name": "--input",
-            "nargs": '?',
-            "type": str,
-            "default": None,
-            "help": "Input folder"
         },
         {
             "name": "--format",
@@ -239,7 +244,7 @@ class ConversionTool(CommandLineTool):
             "type": int,
             "default": None,
             "help": "Output size",
-            # "metavars": ("LENGTH", "WIDTH")
+            "metavar": ("LENGTH", "WIDTH")
         },
     ]
 
