@@ -52,7 +52,7 @@ class ImageConverter(object):
     output_formats = ['jpg', 'jpeg', 'nef']
 
     @staticmethod
-    def resize_images(input_path, output_path, subdirectories=True):
+    def resize_images(length, width, input_path, output_path, subdirectories=True):
         image_list = retrieve_filelist(input_path, file_format=Format.PHOTO, subdirectories=subdirectories)
 
         message = "Number of files to resize: " + str(len(image_list))
@@ -65,10 +65,8 @@ class ImageConverter(object):
                 filename = item.split('/')[-1]
                 image = Image.open(item)
 
-                new_width, new_height = ImageConverter.calculate_size(
-                                                            image.width, image.height,
-                                                            ImageSize.ULTRA_HD['length'],
-                                                            ImageSize.ULTRA_HD['width'])
+                new_width, new_height = ImageConverter.calculate_size(image.width, image.height,
+                                                                      length, width)
 
                 message = "[" + str(index) + "] Resizing and saving file: '" + filename + "'."
                 write_log(message)
@@ -280,7 +278,7 @@ class ConversionTool(CommandLineTool):
             length = new_sizes[0]
             width = new_sizes[1]
             include_subdirectories = self.vargs['r']
-            ImageConverter.resize_images(input_folder, output_folder, include_subdirectories)
+            ImageConverter.resize_images(length, width, input_folder, output_folder, include_subdirectories)
 
         # def run(self):
         # write_log("Starting execution.", 'w')
