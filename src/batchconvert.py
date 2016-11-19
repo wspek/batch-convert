@@ -169,10 +169,27 @@ class CommandLineTool(object):
             description=self.AP_DESCRIPTION,
             formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=32)
         )
+
         self.vargs = None
+
+        groups = dict()
         for arg in self.AP_ARGUMENTS:
-            name = arg.pop("name")
-            self.parser.add_argument(name, **arg)
+            # Return the mutually exclusive group or 'None' if not present.
+            group = arg.pop("group", None)
+            if group is not None:
+                # Create a dictionary of mutually exclusive groups
+                groups.setdefault(group, []).append(arg)
+            else:
+                # Add the remaining arguments by unpacking the dictionary with remaining menu entries.
+                name = arg.pop("name")
+                self.parser.add_argument(name, **arg)
+
+        # If there are mutually exclusive groups to be made, we go into this loop
+        for group_name, arguments in groups.iteritems():
+            group = self.parser.add_mutually_exclusive_group()
+            for arg in arguments:
+                name = arg.pop("name")
+                group.add_argument(name, **arg)
 
     def run(self):
         self.vargs = vars(self.parser.parse_args())
@@ -211,6 +228,12 @@ class ConversionTool(CommandLineTool):
             "help": "Output folder"
         },
         {
+            "name": "-r",
+            "action": "store_true",
+            "help": "Include subfolders"
+        },
+        {
+            "group": "input",
             "name": "--input",
             "nargs": '?',
             "type": str,
@@ -219,11 +242,7 @@ class ConversionTool(CommandLineTool):
             "metavar": "FOLDER"
         },
         {
-            "name": "-r",
-            "action": "store_true",
-            "help": "Include subfolders"
-        },
-        {
+            "group": "input",
             "name": "--file",
             "nargs": '*',
             "type": str,
@@ -231,6 +250,7 @@ class ConversionTool(CommandLineTool):
             "help": "One or more input files"
         },
         {
+            "group": "action",
             "name": "--format",
             "nargs": 1,
             "type": str,
@@ -239,11 +259,12 @@ class ConversionTool(CommandLineTool):
             "choices": formats
         },
         {
+            "group": "action",
             "name": "--resize",
             "nargs": 2,
             "type": int,
             "default": None,
-            "help": "Output size",
+            "help": "Output image size",
             "metavar": ("LENGTH", "WIDTH")
         },
     ]
