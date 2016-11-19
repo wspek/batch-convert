@@ -25,48 +25,26 @@ def write_log(message='', mode='a'):
         log.write(message + '\n')
 
 
-def retrieve_list(dirpath, file_format=Format.ALL, subdirectories=True):
+def retrieve_filelist(dirpath, file_format=Format.ALL, subdirectories=True):
     filelist = []
+
+    # If we want to traverse the path AND its subdirectories, we use 'os.walk'.
     if subdirectories is True:
         for (dirpath, dirnames, filenames) in os.walk(dirpath):
             for filename in filenames:
-                file_extension = os.path.splitext(filename)[1][1:].lower()
-                if (file_format == Format.PHOTO and file_extension in input_formats_image or
-                    file_format == Format.VIDEO and file_extension in input_formats_video or
-                    file_format == Format.ALL and file_extension in input_formats_image + input_formats_video):
-                    filelist.append(dirpath + "/" + filename)
+                # file_extension = os.path.splitext(filename)[1][1:].lower()
+                # if valid_format(file_format, file_extension):
+                        filelist.append(dirpath + "/" + filename)
+    # Else, we are only interested in the files in the passed dirpath.
     else:
         for item in os.listdir(dirpath):
             filename = os.path.join(dirpath, item)
             if os.path.isfile(filename):
-                file_extension = os.path.splitext(item)[1][1:].lower()
-                if (file_format == Format.PHOTO and file_extension in input_formats_image or
-                    file_format == Format.VIDEO and file_extension in input_formats_video or
-                    file_format == Format.ALL and file_extension in input_formats_image + input_formats_video):
+                # file_extension = os.path.splitext(item)[1][1:].lower()
+                # if valid_format(file_format, file_extension):
                     filelist.append(dirpath + "/" + filename)
 
     return filelist
-
-# def retrieve_filelist(dirpath, file_format=Format.ALL, subdirectories=True):
-#     filelist = []
-#
-#     # If we want to traverse the path AND its subdirectories, we use 'os.walk'.
-#     if subdirectories is True:
-#         for (dirpath, dirnames, filenames) in os.walk(dirpath):
-#             for filename in filenames:
-#                 # file_extension = os.path.splitext(filename)[1][1:].lower()
-#                 # if valid_format(file_format, file_extension):
-#                         filelist.append(dirpath + "/" + filename)
-#     # Else, we are only interested in the files in the passed dirpath.
-#     else:
-#         for item in os.listdir(dirpath):
-#             filename = os.path.join(dirpath, item)
-#             if os.path.isfile(filename):
-#                 # file_extension = os.path.splitext(item)[1][1:].lower()
-#                 # if valid_format(file_format, file_extension):
-#                     filelist.append(dirpath + "/" + filename)
-#
-#     return filelist
 
 
 class ImageConverter(object):
@@ -191,7 +169,6 @@ class CommandLineTool(object):
             description=self.AP_DESCRIPTION,
             formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=32)
         )
-
         self.vargs = None
 
         groups = dict()
@@ -292,7 +269,18 @@ class ConversionTool(CommandLineTool):
     ]
 
     def actual_command(self):
-        pass
+        output_folder = self.vargs["FOLDER"]
+
+        if self.vargs["input"]:
+            input_folder = self.vargs["input"]
+        # else if input files...
+
+        if self.vargs["resize"]:
+            new_sizes = self.vargs["resize"]
+            length = new_sizes[0]
+            width = new_sizes[1]
+            include_subdirectories = self.vargs['r']
+            ImageConverter.resize_images(input_folder, output_folder, include_subdirectories)
 
         # def run(self):
         # write_log("Starting execution.", 'w')
