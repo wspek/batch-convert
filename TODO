@@ -3,4 +3,5 @@ X Convert into using classes.
 - Add argparser
     - Really think about functionality
     X mutual exclusiveness
+- Place retrieve_files inside respective Video / Image classes.
 - Add comments

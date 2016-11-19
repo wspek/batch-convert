@@ -25,26 +25,26 @@ def write_log(message='', mode='a'):
         log.write(message + '\n')
 
 
-def retrieve_filelist(dirpath, file_format=Format.ALL, subdirectories=True):
-    filelist = []
-
-    # If we want to traverse the path AND its subdirectories, we use 'os.walk'.
-    if subdirectories is True:
-        for (dirpath, dirnames, filenames) in os.walk(dirpath):
-            for filename in filenames:
-                # file_extension = os.path.splitext(filename)[1][1:].lower()
-                # if valid_format(file_format, file_extension):
-                        filelist.append(dirpath + "/" + filename)
-    # Else, we are only interested in the files in the passed dirpath.
-    else:
-        for item in os.listdir(dirpath):
-            filename = os.path.join(dirpath, item)
-            if os.path.isfile(filename):
-                # file_extension = os.path.splitext(item)[1][1:].lower()
-                # if valid_format(file_format, file_extension):
-                    filelist.append(dirpath + "/" + filename)
-
-    return filelist
+# def retrieve_filelist(dirpath, file_format=Format.ALL, subdirectories=True):
+#     filelist = []
+#
+#     # If we want to traverse the path AND its subdirectories, we use 'os.walk'.
+#     if subdirectories is True:
+#         for (dirpath, dirnames, filenames) in os.walk(dirpath):
+#             for filename in filenames:
+#                 # file_extension = os.path.splitext(filename)[1][1:].lower()
+#                 # if valid_format(file_format, file_extension):
+#                         filelist.append(dirpath + "/" + filename)
+#     # Else, we are only interested in the files in the passed dirpath.
+#     else:
+#         for item in os.listdir(dirpath):
+#             filename = os.path.join(dirpath, item)
+#             if os.path.isfile(filename):
+#                 # file_extension = os.path.splitext(item)[1][1:].lower()
+#                 # if valid_format(file_format, file_extension):
+#                     filelist.append(dirpath + "/" + filename)
+#
+#     return filelist
 
 
 class ImageConverter(object):
@@ -53,7 +53,7 @@ class ImageConverter(object):
 
     @staticmethod
     def resize_images(length, width, input_path, output_path, subdirectories=True):
-        image_list = retrieve_filelist(input_path, file_format=Format.PHOTO, subdirectories=subdirectories)
+        image_list = ImageConverter.retrieve_filelist(input_path, subdirectories=subdirectories)
 
         message = "Number of files to resize: " + str(len(image_list))
         write_log(message)
@@ -98,9 +98,31 @@ class ImageConverter(object):
         return int(new_width), int(new_height)
 
     @staticmethod
-    def valid_format(file_format, extension):
+    def valid_format(extension):
         # A file is valid if it is in the input list for its type.
-        return file_format == Format.PHOTO and extension in ImageConverter.input_formats
+        return Format.PHOTO and extension in ImageConverter.input_formats
+
+    @staticmethod
+    def retrieve_filelist(dirpath, subdirectories=True):
+        filelist = []
+
+        # If we want to traverse the path AND its subdirectories, we use 'os.walk'.
+        if subdirectories is True:
+            for (dirpath, dirnames, filenames) in os.walk(dirpath):
+                for filename in filenames:
+                    file_extension = os.path.splitext(filename)[1][1:].lower()
+                    if ImageConverter.valid_format(file_extension):
+                            filelist.append(dirpath + "/" + filename)
+        # Else, we are only interested in the files in the passed dirpath.
+        else:
+            for item in os.listdir(dirpath):
+                filename = os.path.join(dirpath, item)
+                if os.path.isfile(filename):
+                    file_extension = os.path.splitext(item)[1][1:].lower()
+                    if ImageConverter.valid_format(file_extension):
+                        filelist.append(dirpath + "/" + filename)
+
+        return filelist
 
 
 class VideoConverter(object):
