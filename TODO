@@ -2,5 +2,5 @@ X Replace logging and message formatting.
 X Convert into using classes.
 - Add argparser
     - Really think about functionality
-    - mutual exclusiveness
+    X mutual exclusiveness
 - Add comments
