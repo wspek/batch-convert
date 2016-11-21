@@ -25,159 +25,35 @@ def write_log(message='', mode='a'):
         log.write(message + '\n')
 
 
-def retrieve_filelist(dirpath, file_format=Format.ALL, subdirectories=True):
-    filelist = []
-
-    # If we want to traverse the path AND its subdirectories, we use 'os.walk'.
-    if subdirectories is True:
-        for (dirpath, dirnames, filenames) in os.walk(dirpath):
-            for filename in filenames:
-                # file_extension = os.path.splitext(filename)[1][1:].lower()
-                # if valid_format(file_format, file_extension):
-                        filelist.append(dirpath + "/" + filename)
-    # Else, we are only interested in the files in the passed dirpath.
-    else:
-        for item in os.listdir(dirpath):
-            filename = os.path.join(dirpath, item)
-            if os.path.isfile(filename):
-                # file_extension = os.path.splitext(item)[1][1:].lower()
-                # if valid_format(file_format, file_extension):
-                    filelist.append(dirpath + "/" + filename)
-
-    return filelist
-
-
-class CommandLineTool(object):
-    # overload in the actual subclass
-    #
-    AP_PROGRAM = sys.argv[0]
-    AP_DESCRIPTION = u"Generic Command Line Tool"
-    AP_ARGUMENTS = [
-        # required args
-        # {"name": "foo", "nargs": 1, "type": str, "default": "baz", "help": "Foo help"},
-        #
-        # optional args
-        # {"name": "--bar", "nargs": "?", "type": str,, "default": "foofoofoo", "help": "Bar help"},
-        # {"name": "--quiet", "action": "store_true", "help": "Do not output to stdout"},
-    ]
-
-    def __init__(self):
-        self.parser = argparse.ArgumentParser(
-            prog=self.AP_PROGRAM,
-            description=self.AP_DESCRIPTION
-        )
-        self.vargs = None
-        for arg in self.AP_ARGUMENTS:
-            if "action" in arg:
-                self.parser.add_argument(
-                    arg["name"],
-                    action=arg["action"],
-                    help=arg["help"]
-                )
-            else:
-                self.parser.add_argument(
-                    arg["name"],
-                    nargs=arg["nargs"],
-                    type=arg["type"],
-                    default=arg["default"],
-                    help=arg["help"]
-                )
-
-    def run(self):
-        self.vargs = vars(self.parser.parse_args())
-        # self.actual_command() #TODO
-        sys.exit(0)
-
-    # overload this in your actual subclass
-    def actual_command(self):
-        self.print_stdout(u"This script does nothing. Invoke another .py")
-
-    @staticmethod
-    def error(message):
-        print u"ERROR: {0}".format(message)
-        sys.exit(1)
-
-    @staticmethod
-    def print_stdout(*args, **kwargs):
-        print u"{0}\n{1}".format(args, kwargs)
-
-    @staticmethod
-    def print_stderr(*args, **kwargs):
-        print u"{0}\n{1}\n{2}".format(args, sys.stderr, kwargs)
+# def retrieve_filelist(dirpath, file_format=Format.ALL, subdirectories=True):
+#     filelist = []
+#
+#     # If we want to traverse the path AND its subdirectories, we use 'os.walk'.
+#     if subdirectories is True:
+#         for (dirpath, dirnames, filenames) in os.walk(dirpath):
+#             for filename in filenames:
+#                 # file_extension = os.path.splitext(filename)[1][1:].lower()
+#                 # if valid_format(file_format, file_extension):
+#                         filelist.append(dirpath + "/" + filename)
+#     # Else, we are only interested in the files in the passed dirpath.
+#     else:
+#         for item in os.listdir(dirpath):
+#             filename = os.path.join(dirpath, item)
+#             if os.path.isfile(filename):
+#                 # file_extension = os.path.splitext(item)[1][1:].lower()
+#                 # if valid_format(file_format, file_extension):
+#                     filelist.append(dirpath + "/" + filename)
+#
+#     return filelist
 
 
-class ImageConverter(CommandLineTool):
+class ImageConverter(object):
     input_formats = ['jpg', 'jpeg', 'nef']
     output_formats = ['jpg', 'jpeg', 'nef']
 
-    AP_PROGRAM = u"Batch convert"
-    AP_DESCRIPTION = u"Convert and resize images and video's."
-    AP_ARGUMENTS = [
-        {
-            "name": "file",
-            "nargs": '*',
-            "type": str,
-            "default": None,
-            "help": "One or more input files"
-        },
-        # {
-        #     "name": "--output",
-        #     "nargs": "?",
-        #     "type": str,
-        #     "default": None,
-        #     "help": "Output to file instead of using the standard output"
-        # },
-        # {
-        #     "name": "--csv",
-        #     "action": "store_true",
-        #     "help": "Output in CSV format instead of human-readable format"
-        # },
-        # {
-        #     "name": "--pdf",
-        #     "nargs": "?",
-        #     "type": str,
-        #     "default": None,
-        #     "help": "Output to PDF"
-        # },
-        # {
-        #     "name": "--list",
-        #     "action": "store_true",
-        #     "help": "List the titles of books with annotations or highlights"
-        # },
-        # {
-        #     "name": "--book",
-        #     "nargs": "?",
-        #     "type": str,
-        #     "default": None,
-        #     "help": "Output annotations and highlights only from the book with the given title"
-        # },
-        # {
-        #     "name": "--bookid",
-        #     "nargs": "?",
-        #     "type": str,
-        #     "default": None,
-        #     "help": "Output annotations and highlights only from the book with the given ID"
-        # },
-        # {
-        #     "name": "--annotations-only",
-        #     "action": "store_true",
-        #     "help": "Outputs annotations only, excluding highlights"
-        # },
-        # {
-        #     "name": "--highlights-only",
-        #     "action": "store_true",
-        #     "help": "Outputs highlights only, excluding annotations"
-        # },
-        # {
-        #     "name": "--info",
-        #     "action": "store_true",
-        #     "help": "Print information about the number of annotations and highlights"
-        # },
-    ]
-
     @staticmethod
-    def resize_images(input_path, output_path, subdirectories=True):
-        image_list = retrieve_filelist(input_path, file_format=Format.PHOTO, subdirectories=subdirectories)
+    def resize_images(length, width, input_path, output_path, subdirectories=True):
+        image_list = ImageConverter.retrieve_filelist(input_path, subdirectories=subdirectories)
 
         message = "Number of files to resize: " + str(len(image_list))
         write_log(message)
@@ -189,10 +65,8 @@ class ImageConverter(CommandLineTool):
                 filename = item.split('/')[-1]
                 image = Image.open(item)
 
-                new_width, new_height = ImageConverter.calculate_size(
-                                                            image.width, image.height,
-                                                            ImageSize.ULTRA_HD['length'],
-                                                            ImageSize.ULTRA_HD['width'])
+                new_width, new_height = ImageConverter.calculate_size(image.width, image.height,
+                                                                      length, width)
 
                 message = "[" + str(index) + "] Resizing and saving file: '" + filename + "'."
                 write_log(message)
@@ -224,12 +98,34 @@ class ImageConverter(CommandLineTool):
         return int(new_width), int(new_height)
 
     @staticmethod
-    def valid_format(file_format, extension):
+    def valid_format(extension):
         # A file is valid if it is in the input list for its type.
-        return file_format == Format.PHOTO and extension in ImageConverter.input_formats
+        return Format.PHOTO and extension in ImageConverter.input_formats
+
+    @staticmethod
+    def retrieve_filelist(dirpath, subdirectories=True):
+        filelist = []
+
+        # If we want to traverse the path AND its subdirectories, we use 'os.walk'.
+        if subdirectories is True:
+            for (dirpath, dirnames, filenames) in os.walk(dirpath):
+                for filename in filenames:
+                    file_extension = os.path.splitext(filename)[1][1:].lower()
+                    if ImageConverter.valid_format(file_extension):
+                            filelist.append(dirpath + "/" + filename)
+        # Else, we are only interested in the files in the passed dirpath.
+        else:
+            for item in os.listdir(dirpath):
+                filename = os.path.join(dirpath, item)
+                if os.path.isfile(filename):
+                    file_extension = os.path.splitext(item)[1][1:].lower()
+                    if ImageConverter.valid_format(file_extension):
+                        filelist.append(dirpath + "/" + filename)
+
+        return filelist
 
 
-class VideoConverter(CommandLineTool):
+class VideoConverter(object):
     input_formats = ['wmv', 'mov']
     output_formats = ['mp4']
 
@@ -273,22 +169,166 @@ class VideoConverter(CommandLineTool):
         return file_format == Format.VIDEO and extension in VideoConverter.input_formats_image
 
 
-def run():
-    write_log("Starting execution.", 'w')
+class CommandLineTool(object):
+    # overload in the actual subclass
+    #
+    AP_PROGRAM = sys.argv[0]
+    AP_DESCRIPTION = u"Generic Command Line Tool"
+    AP_ARGUMENTS = [
+        # required args
+        # {"name": "foo", "nargs": 1, "type": str, "default": "baz", "help": "Foo help"},
+        #
+        # optional args
+        # {"name": "--bar", "nargs": "?", "type": str,, "default": "foofoofoo", "help": "Bar help"},
+        # {"name": "--quiet", "action": "store_true", "help": "Do not output to stdout"},
+    ]
 
-    # resize_images('/media/waldo/SSD/Nikon-SDs/Kingston-MicroSD-94749-2',
-    #               '/media/waldo/TRANSCEND-SSD/Photos/Sylvia/Uitzoeken-KINGSTON-SD', subdirectories=True)
+    def __init__(self):
+        self.parser = argparse.ArgumentParser(
+            prog=self.AP_PROGRAM,
+            description=self.AP_DESCRIPTION,
+            formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=32)
+        )
+        self.vargs = None
 
-    ImageConverter().resize_images('/media/waldo/DATA-SHARE/Code/BatchConvert/test/input',
-                                   '/media/waldo/DATA-SHARE/Code/BatchConvert/test/output',
-                                   subdirectories=True)
-    # convert_video(
-    #     '/media/waldo/TRANSCEND-SSD/Film/Video/Travels/New Zealand_2016/New Zealand V - Waikato & King Country.wmv',
-    #     '/tmp', 'wmv', 'mp4')
+        groups = dict()
+        for arg in self.AP_ARGUMENTS:
+            # Return the mutually exclusive group or 'None' if not present.
+            group = arg.pop("group", None)
+            if group is not None:
+                # Create a dictionary of mutually exclusive groups
+                groups.setdefault(group, []).append(arg)
+            else:
+                # Add the remaining arguments by unpacking the dictionary with remaining menu entries.
+                name = arg.pop("name")
+                self.parser.add_argument(name, **arg)
+
+        # If there are mutually exclusive groups to be made, we go into this loop
+        for group_name, arguments in groups.iteritems():
+            group = self.parser.add_mutually_exclusive_group()
+            for arg in arguments:
+                name = arg.pop("name")
+                group.add_argument(name, **arg)
+
+    def run(self):
+        self.vargs = vars(self.parser.parse_args())
+        self.actual_command()
+        sys.exit(0)
+
+    # overload this in your actual subclass
+    def actual_command(self):
+        self.print_stdout(u"This script does nothing. Invoke another .py")
+
+    @staticmethod
+    def error(message):
+        print u"ERROR: {0}".format(message)
+        sys.exit(1)
+
+    @staticmethod
+    def print_stdout(*args, **kwargs):
+        print u"{0}\n{1}".format(args, kwargs)
+
+    @staticmethod
+    def print_stderr(*args, **kwargs):
+        print u"{0}\n{1}\n{2}".format(args, sys.stderr, kwargs)
+
+
+class ConversionTool(CommandLineTool):
+    formats = ImageConverter.output_formats + VideoConverter.output_formats
+
+    AP_PROGRAM = u"Batch convert"
+    AP_DESCRIPTION = u"Convert and resize images and video's."
+    AP_ARGUMENTS = [
+        {
+            "name": "FOLDER",
+            "nargs": None,
+            "type": str,
+            "default": None,
+            "help": "Output folder"
+        },
+        {
+            "name": "-r",
+            "action": "store_true",
+            "help": "Include subfolders"
+        },
+        {
+            "group": "input",
+            "name": "--input",
+            "nargs": '?',
+            "type": str,
+            "default": None,
+            "help": "Input folder",
+            "metavar": "FOLDER"
+        },
+        {
+            "group": "input",
+            "name": "--file",
+            "nargs": '*',
+            "type": str,
+            "default": None,
+            "help": "One or more input files"
+        },
+        {
+            "group": "action",
+            "name": "--format",
+            "nargs": 1,
+            "type": str,
+            "default": None,
+            "help": "Output format after conversion",
+            "choices": formats
+        },
+        {
+            "group": "action",
+            "name": "--resize",
+            "nargs": 2,
+            "type": int,
+            "default": None,
+            "help": "Output image size",
+            "metavar": ("LENGTH", "WIDTH")
+        },
+    ]
+
+    def actual_command(self):
+        output_folder = self.vargs["FOLDER"]
+
+        if self.vargs["input"]:
+            input_folder = self.vargs["input"]
+        # else if input files...
+
+        if self.vargs["resize"]:
+            new_sizes = self.vargs["resize"]
+            length = new_sizes[0]
+            width = new_sizes[1]
+            include_subdirectories = self.vargs['r']
+            ImageConverter.resize_images(length, width, input_folder, output_folder, include_subdirectories)
+
+        # def run(self):
+        # write_log("Starting execution.", 'w')
+
+        # resize_images('/media/waldo/SSD/Nikon-SDs/Kingston-MicroSD-94749-2',
+        #               '/media/waldo/TRANSCEND-SSD/Photos/Sylvia/Uitzoeken-KINGSTON-SD', subdirectories=True)
+
+        # self.resize_images('/media/waldo/DATA-SHARE/Code/BatchConvert/test/input',
+        #                    '/media/waldo/DATA-SHARE/Code/BatchConvert/test/output',
+        #                    subdirectories=True)
+
+
+# def run():
+#     write_log("Starting execution.", 'w')
+#
+#     # resize_images('/media/waldo/SSD/Nikon-SDs/Kingston-MicroSD-94749-2',
+#     #               '/media/waldo/TRANSCEND-SSD/Photos/Sylvia/Uitzoeken-KINGSTON-SD', subdirectories=True)
+#
+#     ImageConverter().resize_images('/media/waldo/DATA-SHARE/Code/BatchConvert/test/input',
+#                                    '/media/waldo/DATA-SHARE/Code/BatchConvert/test/output',
+#                                    subdirectories=True)
+#     # convert_video(
+#     #     '/media/waldo/TRANSCEND-SSD/Film/Video/Travels/New Zealand_2016/New Zealand V - Waikato & King Country.wmv',
+#     #     '/tmp', 'wmv', 'mp4')
 
 
 def main():
-    run()
+    ConversionTool().run()
 
 
 if __name__ == '__main__':
