@@ -1,9 +1,9 @@
 ## Usage
 
-`Batch convert [-h] [-r]
-              [--format {jpg,jpeg,nef,mp4} | --resize LENGTH WIDTH]
-              [--input [FOLDER] | --file [FILE [FILE ...]]]
-              FOLDER
+```batchconvert [-h] [-r]
+                [--format {jpg,jpeg,nef,mp4} | --resize LENGTH WIDTH]
+                [--input [FOLDER] | --file [FILE [FILE ...]]]
+                FOLDER
 
 Convert and resize images and video's.
 
@@ -17,6 +17,7 @@ optional arguments:
   --resize LENGTH WIDTH        Output image size
   --input [FOLDER]             Input folder
   --file [FILE [FILE ...]]     One or more input files`
+```
 
 ### Show help
 `batchconvert -h`
