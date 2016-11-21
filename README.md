@@ -1,6 +1,7 @@
 ## Usage
 
-```batchconvert [-h] [-r]
+```
+batchconvert [-h] [-r]
                 [--format {jpg,jpeg,nef,mp4} | --resize LENGTH WIDTH]
                 [--input [FOLDER] | --file [FILE [FILE ...]]]
                 FOLDER
