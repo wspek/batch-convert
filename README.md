@@ -23,20 +23,5 @@ optional arguments:
 ### Show help
 `batchconvert -h`
 
-### Convert multiple images to a new image format and output destination files in the same directory.
-`batchconvert --file [FILE [FILE ...]]] --format 'jpg' .`
-
-### Convert multiple images to a new image format and output destination files in a different directory.
-`batchconvert --file [FILE [FILE ...]]] --format 'jpg' FOLDER`
-
-### Convert all images in a folder to a new image format and output the destination files in a different directory
-`batchconvert --input [FOLDER] --format 'jpg' FOLDER`
-
-### Resize multiple images to a new image size and output destination files in the same directory.
-`batchconvert --file [FILE [FILE ...]]] --resize 3000 2000 .`
-
-### Resize multiple images to a new image size and output destination files in a different directory.
-`batchconvert --file [FILE [FILE ...]]] --resize 3000 2000 FOLDER`
-
-### Resize multiple images in a folder to a new image size and output destination files in a different directory.
-`batchconvert --input [FOLDER] FOLDER --resize 3000 2000 FOLDER`
+### Resize images in folder to new image size and output destination files in a different directory.
+`batchconvert --input [FOLDER] --resize 3000 2000 FOLDER`
