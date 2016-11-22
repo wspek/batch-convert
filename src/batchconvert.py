@@ -25,28 +25,6 @@ def write_log(message='', mode='a'):
         log.write(message + '\n')
 
 
-# def retrieve_filelist(dirpath, file_format=Format.ALL, subdirectories=True):
-#     filelist = []
-#
-#     # If we want to traverse the path AND its subdirectories, we use 'os.walk'.
-#     if subdirectories is True:
-#         for (dirpath, dirnames, filenames) in os.walk(dirpath):
-#             for filename in filenames:
-#                 # file_extension = os.path.splitext(filename)[1][1:].lower()
-#                 # if valid_format(file_format, file_extension):
-#                         filelist.append(dirpath + "/" + filename)
-#     # Else, we are only interested in the files in the passed dirpath.
-#     else:
-#         for item in os.listdir(dirpath):
-#             filename = os.path.join(dirpath, item)
-#             if os.path.isfile(filename):
-#                 # file_extension = os.path.splitext(item)[1][1:].lower()
-#                 # if valid_format(file_format, file_extension):
-#                     filelist.append(dirpath + "/" + filename)
-#
-#     return filelist
-
-
 class ImageConverter(object):
     input_formats = ['jpg', 'jpeg', 'nef']
     output_formats = ['jpg', 'jpeg', 'nef']
@@ -164,9 +142,31 @@ class VideoConverter(object):
                 inputfile, input_format, output_folder, file_name, output_format))
 
     @staticmethod
+    def retrieve_filelist(dirpath, subdirectories=True):
+        filelist = []
+
+        # If we want to traverse the path AND its subdirectories, we use 'os.walk'.
+        if subdirectories is True:
+            for (dirpath, dirnames, filenames) in os.walk(dirpath):
+                for filename in filenames:
+                    file_extension = os.path.splitext(filename)[1][1:].lower()
+                    if VideoConverter.valid_format(file_extension):
+                            filelist.append(dirpath + "/" + filename)
+        # Else, we are only interested in the files in the passed dirpath.
+        else:
+            for item in os.listdir(dirpath):
+                filename = os.path.join(dirpath, item)
+                if os.path.isfile(filename):
+                    file_extension = os.path.splitext(item)[1][1:].lower()
+                    if VideoConverter.valid_format(file_extension):
+                        filelist.append(dirpath + "/" + filename)
+
+        return filelist
+
+    @staticmethod
     def valid_format(file_format, extension):
         # A file is valid if it is in the input list for its type.
-        return file_format == Format.VIDEO and extension in VideoConverter.input_formats_image
+        return file_format == Format.VIDEO and extension in VideoConverter.input_formats
 
 
 class CommandLineTool(object):
