@@ -54,10 +54,10 @@ class Converter(object):
     def valid_format(self, extension):
         raise NotImplementedError("Please implement this method.")
 
-    def resize(self):
-        pass
-
     def convert(self):
+        raise NotImplementedError("Please implement this method.")
+
+    def resize(self):
         pass
 
 
@@ -80,6 +80,13 @@ class ImageConverter(Converter):
         for index, item in enumerate(image_list):
             try:
                 filename = item.split('/')[-1]
+                file_extension = filename.split('.')[1].lower()
+
+                if not self.valid_format(file_extension):
+                    message = "[{0}] Unable to convert '{1}'. Unsupported source format.".format(index, filename)
+                    logger.write_log(message)
+                    continue
+
                 image = Image.open(item)
 
                 new_width, new_height = ImageConverter.calculate_size(image.width, image.height,
@@ -93,6 +100,7 @@ class ImageConverter(Converter):
                 # EXIF data: things like ISO speed, shutter speed, aperture, white balance, camera model etc.
                 exif = image.info['exif']
                 img_resized.save(output_path + '/' + filename, exif=exif)
+
             except Exception as e:
                 message = "[{0}] Failed to resize. Message: {1}.".format(index, e.strerror)
                 logger.write_log(message)

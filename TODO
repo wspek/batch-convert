@@ -1,6 +1,5 @@
 - Add argparser
     - Really think about functionality
-- Theory - how to enforce abstract methods (in subclasses).
 - Test VideoConverter
 - Add comments
 - Use Python logging class?
@@ -9,3 +8,4 @@ X mutual exclusiveness
 X Place retrieve_files inside respective Video / Image classes.
 X Replace logging and message formatting.
 X Convert into using classes.
+X Theory - how to enforce abstract methods (in subclasses).
