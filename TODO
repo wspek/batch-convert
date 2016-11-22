@@ -1,7 +1,6 @@
 - Add argparser
     - Really think about functionality
 - Theory - how to enforce abstract methods (in subclasses).
-
 - Test VideoConverter
 - Add comments
 

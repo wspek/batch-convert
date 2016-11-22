@@ -1,9 +1,9 @@
 import sys
 import os
 import argparse
+from abc import ABCMeta, abstractmethod
 from enum import Enum
 from PIL import Image
-
 
 output_log = '/media/waldo/DATA-SHARE/Code/BatchConvert/output/output.log'
 
@@ -26,6 +26,8 @@ def write_log(message='', mode='a'):
 
 
 class Converter(object):
+    __metaclass__ = ABCMeta
+
     input_formats = []
     output_formats = []
 
@@ -38,7 +40,7 @@ class Converter(object):
                 for filename in filenames:
                     file_extension = os.path.splitext(filename)[1][1:].lower()
                     if self.valid_format(file_extension):
-                            filelist.append(dirpath + "/" + filename)
+                        filelist.append(dirpath + "/" + filename)
         # Else, we are only interested in the files in the passed dirpath.
         else:
             for item in os.listdir(dirpath):
@@ -50,8 +52,9 @@ class Converter(object):
 
         return filelist
 
+    @abstractmethod
     def valid_format(self, extension):
-        pass
+        raise NotImplementedError("Please implement this method.")
 
     def resize(self):
         pass
@@ -122,7 +125,7 @@ class VideoConverter(object):
     def convert_video(input_path, output_folder, input_format, output_format):
         # First check whether the requested conversion formats are valid. If not, notify user and return.
         if input_format.lower() not in VideoConverter.input_formats or \
-           output_format.lower() not in VideoConverter.output_formats:
+                        output_format.lower() not in VideoConverter.output_formats:
             print "Conversion from '" + input_format + "' to '" + output_format + "' not possible.",
 
             # Print all possible allowed conversion formats to screen.
@@ -152,27 +155,27 @@ class VideoConverter(object):
             os.system('ffmpeg -i "%s.%s" -c:v:1 copy -strict -2 "%s/%s.%s"' % (
                 inputfile, input_format, output_folder, file_name, output_format))
 
-    @staticmethod
-    def retrieve_filelist(dirpath, subdirectories=True):
-        filelist = []
-
-        # If we want to traverse the path AND its subdirectories, we use 'os.walk'.
-        if subdirectories is True:
-            for (dirpath, dirnames, filenames) in os.walk(dirpath):
-                for filename in filenames:
-                    file_extension = os.path.splitext(filename)[1][1:].lower()
-                    if VideoConverter.valid_format(file_extension):
-                            filelist.append(dirpath + "/" + filename)
-        # Else, we are only interested in the files in the passed dirpath.
-        else:
-            for item in os.listdir(dirpath):
-                filename = os.path.join(dirpath, item)
-                if os.path.isfile(filename):
-                    file_extension = os.path.splitext(item)[1][1:].lower()
-                    if VideoConverter.valid_format(file_extension):
-                        filelist.append(dirpath + "/" + filename)
-
-        return filelist
+    # @staticmethod
+    # def retrieve_filelist(dirpath, subdirectories=True):
+    #     filelist = []
+    #
+    #     # If we want to traverse the path AND its subdirectories, we use 'os.walk'.
+    #     if subdirectories is True:
+    #         for (dirpath, dirnames, filenames) in os.walk(dirpath):
+    #             for filename in filenames:
+    #                 file_extension = os.path.splitext(filename)[1][1:].lower()
+    #                 if VideoConverter.valid_format(file_extension):
+    #                         filelist.append(dirpath + "/" + filename)
+    #     # Else, we are only interested in the files in the passed dirpath.
+    #     else:
+    #         for item in os.listdir(dirpath):
+    #             filename = os.path.join(dirpath, item)
+    #             if os.path.isfile(filename):
+    #                 file_extension = os.path.splitext(item)[1][1:].lower()
+    #                 if VideoConverter.valid_format(file_extension):
+    #                     filelist.append(dirpath + "/" + filename)
+    #
+    #     return filelist
 
     @staticmethod
     def valid_format(file_format, extension):
@@ -316,7 +319,6 @@ class ConversionTool(CommandLineTool):
 
         if self.vargs["format"]:
             pass
-
 
     def reformat(self):
         pass
