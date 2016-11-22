@@ -4,4 +4,5 @@ X Convert into using classes.
     - Really think about functionality
     X mutual exclusiveness
 - Place retrieve_files inside respective Video / Image classes.
+- Test VideoConverter
 - Add comments

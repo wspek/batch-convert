@@ -132,8 +132,8 @@ class VideoConverter(object):
     @staticmethod
     def convert_video(input_path, output_folder, input_format, output_format):
         # First check whether the requested conversion formats are valid. If not, notify user and return.
-        if input_format not in VideoConverter.input_formats or \
-           output_format not in VideoConverter.output_formats:
+        if input_format.lower() not in VideoConverter.input_formats or \
+           output_format.lower() not in VideoConverter.output_formats:
             print "Conversion from '" + input_format + "' to '" + output_format + "' not possible.",
 
             # Print all possible allowed conversion formats to screen.
