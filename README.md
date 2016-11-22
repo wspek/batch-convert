@@ -30,7 +30,7 @@ optional arguments:
 `batchconvert --file [FILE [FILE ...]]] --format 'jpg' FOLDER`
 
 ### Convert all images in a folder to a new image format and output the destination files in a different directory
-`batchconvert --input [FOLDER] FOLDER -format 'jpg' FOLDER`
+`batchconvert --input [FOLDER] --format 'jpg' FOLDER`
 
 ### Resize multiple images to a new image size and output destination files in the same directory.
 `batchconvert --file [FILE [FILE ...]]] --resize 3000 2000 .`

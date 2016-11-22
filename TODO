@@ -1,8 +1,11 @@
-X Replace logging and message formatting.
-X Convert into using classes.
 - Add argparser
     - Really think about functionality
-    X mutual exclusiveness
-X Place retrieve_files inside respective Video / Image classes.
+- Theory - how to enforce abstract methods (in subclasses).
+
 - Test VideoConverter
 - Add comments
+
+X mutual exclusiveness
+X Place retrieve_files inside respective Video / Image classes.
+X Replace logging and message formatting.
+X Convert into using classes.

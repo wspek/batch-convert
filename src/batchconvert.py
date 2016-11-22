@@ -25,13 +25,51 @@ def write_log(message='', mode='a'):
         log.write(message + '\n')
 
 
-class ImageConverter(object):
+class Converter(object):
+    input_formats = []
+    output_formats = []
+
+    def retrieve_filelist(self, dirpath, subdirectories=True):
+        filelist = []
+
+        # If we want to traverse the path AND its subdirectories, we use 'os.walk'.
+        if subdirectories is True:
+            for (dirpath, dirnames, filenames) in os.walk(dirpath):
+                for filename in filenames:
+                    file_extension = os.path.splitext(filename)[1][1:].lower()
+                    if self.valid_format(file_extension):
+                            filelist.append(dirpath + "/" + filename)
+        # Else, we are only interested in the files in the passed dirpath.
+        else:
+            for item in os.listdir(dirpath):
+                filepath = os.path.join(dirpath, item)
+                if os.path.isfile(filepath):
+                    file_extension = os.path.splitext(item)[1][1:].lower()
+                    if self.valid_format(file_extension):
+                        filelist.append(filepath)
+
+        return filelist
+
+    def valid_format(self, extension):
+        pass
+
+    def resize(self):
+        pass
+
+    def convert(self):
+        pass
+
+
+class ImageConverter(Converter):
     input_formats = ['jpg', 'jpeg', 'nef']
     output_formats = ['jpg', 'jpeg', 'nef']
 
-    @staticmethod
-    def resize_images(length, width, input_path, output_path, subdirectories=True):
-        image_list = ImageConverter.retrieve_filelist(input_path, subdirectories=subdirectories)
+    def valid_format(self, extension):
+        # A file is valid if it is in the input list for its type.
+        return Format.PHOTO and extension in self.input_formats
+
+    def resize_images(self, length, width, input_path, output_path, subdirectories=True):
+        image_list = self.retrieve_filelist(input_path, subdirectories=subdirectories)
 
         message = "Number of files to resize: " + str(len(image_list))
         write_log(message)
@@ -55,7 +93,7 @@ class ImageConverter(object):
                 exif = image.info['exif']
                 img_resized.save(output_path + '/' + filename, exif=exif)
             except Exception as e:
-                message = "[{0}] Failed to resize. Message: {1}.".format(index, e.message)
+                message = "[{0}] Failed to resize. Message: {1}.".format(index, e.strerror)
                 write_log(message)
 
     @staticmethod
@@ -74,33 +112,6 @@ class ImageConverter(object):
         new_width, new_height = map(lambda x: resize_factor * x, (width, height))
 
         return int(new_width), int(new_height)
-
-    @staticmethod
-    def valid_format(extension):
-        # A file is valid if it is in the input list for its type.
-        return Format.PHOTO and extension in ImageConverter.input_formats
-
-    @staticmethod
-    def retrieve_filelist(dirpath, subdirectories=True):
-        filelist = []
-
-        # If we want to traverse the path AND its subdirectories, we use 'os.walk'.
-        if subdirectories is True:
-            for (dirpath, dirnames, filenames) in os.walk(dirpath):
-                for filename in filenames:
-                    file_extension = os.path.splitext(filename)[1][1:].lower()
-                    if ImageConverter.valid_format(file_extension):
-                            filelist.append(dirpath + "/" + filename)
-        # Else, we are only interested in the files in the passed dirpath.
-        else:
-            for item in os.listdir(dirpath):
-                filename = os.path.join(dirpath, item)
-                if os.path.isfile(filename):
-                    file_extension = os.path.splitext(item)[1][1:].lower()
-                    if ImageConverter.valid_format(file_extension):
-                        filelist.append(dirpath + "/" + filename)
-
-        return filelist
 
 
 class VideoConverter(object):
@@ -291,6 +302,7 @@ class ConversionTool(CommandLineTool):
     def actual_command(self):
         output_folder = self.vargs["FOLDER"]
 
+        # If the input consists of a folder...
         if self.vargs["input"]:
             input_folder = self.vargs["input"]
         # else if input files...
@@ -300,8 +312,14 @@ class ConversionTool(CommandLineTool):
             length = new_sizes[0]
             width = new_sizes[1]
             include_subdirectories = self.vargs['r']
-            ImageConverter.resize_images(length, width, input_folder, output_folder, include_subdirectories)
+            ImageConverter().resize_images(length, width, input_folder, output_folder, include_subdirectories)
 
+        if self.vargs["format"]:
+            pass
+
+
+    def reformat(self):
+        pass
         # def run(self):
         # write_log("Starting execution.", 'w')
 
