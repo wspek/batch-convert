@@ -1,16 +1,8 @@
 import sys
 import argparse
+import logger
 from converter import ImageConverter
 from converter import VideoConverter
-
-
-output_log = '/media/waldo/DATA-SHARE/Code/BatchConvert/output/output.log'
-
-
-def write_log(message='', mode='a'):
-    print message
-    with open(output_log, mode) as log:
-        log.write(message + '\n')
 
 
 class CommandLineTool(object):
@@ -153,7 +145,7 @@ class ConversionTool(CommandLineTool):
     def reformat(self):
         pass
         # def run(self):
-        # write_log("Starting execution.", 'w')
+        # logger.write_log("Starting execution.", 'w')
 
         # resize_images('/media/waldo/SSD/Nikon-SDs/Kingston-MicroSD-94749-2',
         #               '/media/waldo/TRANSCEND-SSD/Photos/Sylvia/Uitzoeken-KINGSTON-SD', subdirectories=True)
@@ -164,7 +156,7 @@ class ConversionTool(CommandLineTool):
 
 
 # def run():
-#     write_log("Starting execution.", 'w')
+#     logger.write_log("Starting execution.", 'w')
 #
 #     # resize_images('/media/waldo/SSD/Nikon-SDs/Kingston-MicroSD-94749-2',
 #     #               '/media/waldo/TRANSCEND-SSD/Photos/Sylvia/Uitzoeken-KINGSTON-SD', subdirectories=True)

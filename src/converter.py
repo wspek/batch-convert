@@ -2,6 +2,7 @@
  Created by waldo on 11/22/16
 """
 import os
+import logger
 from abc import ABCMeta, abstractmethod
 from enum import Enum
 from PIL import Image
@@ -72,7 +73,7 @@ class ImageConverter(Converter):
         image_list = self.retrieve_filelist(input_path, subdirectories=subdirectories)
 
         message = "Number of files to resize: " + str(len(image_list))
-        write_log(message)
+        logger.write_log(message)
 
         raw_input("\nPress any key to continue...\n")
 
@@ -85,7 +86,7 @@ class ImageConverter(Converter):
                                                                       length, width)
 
                 message = "[" + str(index) + "] Resizing and saving file: '" + filename + "'."
-                write_log(message)
+                logger.write_log(message)
 
                 img_resized = image.resize((new_width, new_height), Image.ANTIALIAS)
 
@@ -94,7 +95,7 @@ class ImageConverter(Converter):
                 img_resized.save(output_path + '/' + filename, exif=exif)
             except Exception as e:
                 message = "[{0}] Failed to resize. Message: {1}.".format(index, e.strerror)
-                write_log(message)
+                logger.write_log(message)
 
     @staticmethod
     def calculate_size(width, height, max_length, max_width):
