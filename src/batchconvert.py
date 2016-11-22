@@ -20,6 +20,8 @@ class CommandLineTool(object):
     ]
 
     def __init__(self):
+        logger.write_log("Starting execution.", 'w')
+
         self.parser = argparse.ArgumentParser(
             prog=self.AP_PROGRAM,
             description=self.AP_DESCRIPTION,

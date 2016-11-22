@@ -157,26 +157,3 @@ class VideoConverter(object):
             os.system('ffmpeg -i "%s.%s" -c:v:1 copy -strict -2 "%s/%s.%s"' % (
                 inputfile, input_format, output_folder, file_name, output_format))
 
-    # @staticmethod
-    # def retrieve_filelist(dirpath, subdirectories=True):
-    #     filelist = []
-    #
-    #     # If we want to traverse the path AND its subdirectories, we use 'os.walk'.
-    #     if subdirectories is True:
-    #         for (dirpath, dirnames, filenames) in os.walk(dirpath):
-    #             for filename in filenames:
-    #                 file_extension = os.path.splitext(filename)[1][1:].lower()
-    #                 if VideoConverter.valid_format(file_extension):
-    #                         filelist.append(dirpath + "/" + filename)
-    #     # Else, we are only interested in the files in the passed dirpath.
-    #     else:
-    #         for item in os.listdir(dirpath):
-    #             filename = os.path.join(dirpath, item)
-    #             if os.path.isfile(filename):
-    #                 file_extension = os.path.splitext(item)[1][1:].lower()
-    #                 if VideoConverter.valid_format(file_extension):
-    #                     filelist.append(dirpath + "/" + filename)
-    #
-    #     return filelist
- 
-
