@@ -3,9 +3,9 @@
 """
 import os
 import logger
+from PIL import Image
 from abc import ABCMeta, abstractmethod
 from enum import Enum
-from PIL import Image
 
 
 __author__ = "waldo"
@@ -21,6 +21,59 @@ class Format(Enum):
 class ImageSize(object):
     HD = {'length': 1920, 'width': 1080}
     ULTRA_HD = {'length': 3840, 'width': 2160}
+
+
+class ImageObject(object):
+    def __init__(self, path):
+        self.path = path
+        self.filename = self.path.split('/')[-1]
+        self.extension = self.filename.split('.')[1].lower()
+        self.width, self.height = self.size()
+
+    # Abstract method!
+    def size(self):
+        pass
+
+    # Abstract method!
+    def resize_and_save(self, new_length, new_width, output_path):
+        pass
+
+    def calc_new_size(width, height, max_length, max_width):
+        # In this context 'length' means the longest side of the image i.e. the greatest value between height
+        # & width. Implicitly this means that 'width' is the shortest side.
+        orig_length = max(height, width)
+        orig_width = min(height, width)
+
+        # Calculate for both the longest as the shortest side how much the resize factor should be.
+        length_ratio = max_length / float(orig_length)
+        width_ratio = max_width / float(orig_width)
+
+        # Choose the largest resize factor, since we would like to keep the current aspect ratio of the image.
+        resize_factor = max(length_ratio, width_ratio)
+        new_width, new_height = map(lambda x: resize_factor * x, (width, height))
+
+        return int(new_width), int(new_height)
+
+
+class JPGImageObject(ImageObject):
+    def __init__(self, path):
+        self.image = Image.open(path)
+        super(JPGImageObject, self).__init__(path)
+
+    def size(self):
+        return self.image.width, self.image.height
+
+    def resize_and_save(self, new_length, new_width, output_path):
+        new_width, new_height = self.calc_new_size(self.width, self.height, new_length, new_width)
+        img_resized = self.image.resize((new_width, new_height), Image.ANTIALIAS)
+
+        # EXIF data: things like ISO speed, shutter speed, aperture, white balance, camera model etc.
+        exif = self.image.info['exif']
+        img_resized.save(output_path + '/' + self.filename, exif=exif)
+
+
+class NEFImageObject(ImageObject):
+    pass
 
 
 class Converter(object):
@@ -65,6 +118,19 @@ class ImageConverter(Converter):
     input_formats = ['jpg', 'jpeg', 'nef']
     output_formats = ['jpg', 'jpeg', 'nef']
 
+    def create_image(self, path):
+        filename = path.split('/')[-1]
+        extension = filename.split('.')[1].lower()
+
+        if extension in ['jpg', 'jpeg']:
+            return JPGImageObject(path)
+        # elif extension == 'nef':
+        #     return NEFImageObject(path)
+        else:
+            message = "Cannot convert '{0}'. File extension not recognized.".format(filename)
+            logger.write_log(message)
+            return None
+
     def valid_format(self, extension):
         # A file is valid if it is in the input list for its type.
         return Format.PHOTO and extension in self.input_formats
@@ -79,48 +145,15 @@ class ImageConverter(Converter):
 
         for index, item in enumerate(image_list):
             try:
-                filename = item.split('/')[-1]
-                file_extension = filename.split('.')[1].lower()
+                image = self.create_image(item)
 
-                if not self.valid_format(file_extension):
-                    message = "[{0}] Unable to convert '{1}'. Unsupported source format.".format(index, filename)
+                if image is not None:
+                    message = "[" + str(index) + "] Resizing and saving file: '" + image.filename + "'."
                     logger.write_log(message)
-                    continue
-
-                image = Image.open(item)
-
-                new_width, new_height = ImageConverter.calculate_size(image.width, image.height,
-                                                                      length, width)
-
-                message = "[" + str(index) + "] Resizing and saving file: '" + filename + "'."
-                logger.write_log(message)
-
-                img_resized = image.resize((new_width, new_height), Image.ANTIALIAS)
-
-                # EXIF data: things like ISO speed, shutter speed, aperture, white balance, camera model etc.
-                exif = image.info['exif']
-                img_resized.save(output_path + '/' + filename, exif=exif)
-
+                    image.resize_and_save(length, width, output_path)
             except Exception as e:
                 message = "[{0}] Failed to resize. Message: {1}.".format(index, e.strerror)
                 logger.write_log(message)
-
-    @staticmethod
-    def calculate_size(width, height, max_length, max_width):
-        # In this context 'length' means the longest side of the image i.e. the greatest value between height
-        # & width. Implicitly this means that 'width' is the shortest side.
-        orig_length = max(height, width)
-        orig_width = min(height, width)
-
-        # Calculate for both the longest as the shortest side how much the resize factor should be.
-        length_ratio = max_length / float(orig_length)
-        width_ratio = max_width / float(orig_width)
-
-        # Choose the largest resize factor, since we would like to keep the current aspect ratio of the image.
-        resize_factor = max(length_ratio, width_ratio)
-        new_width, new_height = map(lambda x: resize_factor * x, (width, height))
-
-        return int(new_width), int(new_height)
 
 
 class VideoConverter(object):
@@ -164,4 +197,3 @@ class VideoConverter(object):
                 file_name = inputfile.split('/')[-1]
             os.system('ffmpeg -i "%s.%s" -c:v:1 copy -strict -2 "%s/%s.%s"' % (
                 inputfile, input_format, output_folder, file_name, output_format))
-
