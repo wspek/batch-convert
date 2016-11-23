@@ -38,7 +38,7 @@ class ImageObject(object):
     def resize_and_save(self, new_length, new_width, output_path):
         pass
 
-    def calc_new_size(width, height, max_length, max_width):
+    def calc_new_size(self, width, height, max_length, max_width):
         # In this context 'length' means the longest side of the image i.e. the greatest value between height
         # & width. Implicitly this means that 'width' is the shortest side.
         orig_length = max(height, width)
@@ -135,26 +135,29 @@ class ImageConverter(Converter):
         # A file is valid if it is in the input list for its type.
         return Format.PHOTO and extension in self.input_formats
 
-    def resize_images(self, length, width, input_path, output_path, subdirectories=True):
+    def resize_images(self, length, width, input_path, output_folder, subdirectories=True):
         image_list = self.retrieve_filelist(input_path, subdirectories=subdirectories)
 
         message = "Number of files to resize: " + str(len(image_list))
         logger.write_log(message)
 
-        raw_input("\nPress any key to continue...\n")
+        # raw_input("\nPress any key to continue...\n")
 
-        for index, item in enumerate(image_list):
+        for index, image_path in enumerate(image_list):
+            logger.write_log("File #{0}".format(index))
+            self.resize_image(length, width, image_path, output_folder)
+
+    def resize_image(self, length, width, input_file, output_folder):
+        image = self.create_image(input_file)
+
+        if image is not None:
+            message = "Resizing and saving file: '{0}'.".format(image.filename)
+            logger.write_log(message)
             try:
-                image = self.create_image(item)
-
-                if image is not None:
-                    message = "[" + str(index) + "] Resizing and saving file: '" + image.filename + "'."
-                    logger.write_log(message)
-                    image.resize_and_save(length, width, output_path)
+                image.resize_and_save(length, width, output_folder)
             except Exception as e:
-                message = "[{0}] Failed to resize. Message: {1}.".format(index, e.strerror)
+                message = "Failed to resize file. Message: {0}.".format(e.strerror)
                 logger.write_log(message)
-
 
 class VideoConverter(object):
     input_formats = ['wmv', 'mov']
