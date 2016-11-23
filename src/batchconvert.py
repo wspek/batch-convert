@@ -140,7 +140,6 @@ class ConversionTool(CommandLineTool):
             width = new_sizes[1]
             include_subdirectories = self.vargs['r']
             ImageConverter().resize_images(length, width, input_folder, output_folder, include_subdirectories)
-
         if self.vargs["format"]:
             pass
 

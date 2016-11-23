@@ -64,12 +64,13 @@ class JPGImageObject(ImageObject):
         return self.image.width, self.image.height
 
     def resize_and_save(self, new_length, new_width, output_path):
-        new_width, new_height = self.calc_new_size(self.width, self.height, new_length, new_width)
-        img_resized = self.image.resize((new_width, new_height), Image.ANTIALIAS)
-
         # EXIF data: things like ISO speed, shutter speed, aperture, white balance, camera model etc.
         exif = self.image.info['exif']
-        img_resized.save(output_path + '/' + self.filename, exif=exif)
+
+        new_width, new_height = self.calc_new_size(self.width, self.height, new_length, new_width)
+        self.image = self.image.resize((new_width, new_height), Image.ANTIALIAS)
+
+        self.image.save(output_path + '/' + self.filename, exif=exif)
 
 
 class NEFImageObject(ImageObject):
@@ -107,17 +108,16 @@ class Converter(object):
     def valid_format(self, extension):
         raise NotImplementedError("Please implement this method.")
 
-    def convert(self):
-        raise NotImplementedError("Please implement this method.")
-
-    def resize(self):
-        pass
-
 
 class ImageConverter(Converter):
     input_formats = ['jpg', 'jpeg', 'nef']
     output_formats = ['jpg', 'jpeg', 'nef']
 
+    def valid_format(self, extension):
+        # A file is valid if it is in the input list for its type.
+        return Format.PHOTO and extension in self.input_formats
+
+    # Factory
     def create_image(self, path):
         filename = path.split('/')[-1]
         extension = filename.split('.')[1].lower()
@@ -127,13 +127,9 @@ class ImageConverter(Converter):
         # elif extension == 'nef':
         #     return NEFImageObject(path)
         else:
-            message = "Cannot convert '{0}'. File extension not recognized.".format(filename)
+            message = "Cannot convert '{0}'. File extension not supported.".format(filename)
             logger.write_log(message)
             return None
-
-    def valid_format(self, extension):
-        # A file is valid if it is in the input list for its type.
-        return Format.PHOTO and extension in self.input_formats
 
     def resize_images(self, length, width, input_path, output_folder, subdirectories=True):
         image_list = self.retrieve_filelist(input_path, subdirectories=subdirectories)
@@ -144,20 +140,17 @@ class ImageConverter(Converter):
         # raw_input("\nPress any key to continue...\n")
 
         for index, image_path in enumerate(image_list):
-            logger.write_log("File #{0}".format(index))
-            self.resize_image(length, width, image_path, output_folder)
-
-    def resize_image(self, length, width, input_file, output_folder):
-        image = self.create_image(input_file)
-
-        if image is not None:
-            message = "Resizing and saving file: '{0}'.".format(image.filename)
-            logger.write_log(message)
-            try:
-                image.resize_and_save(length, width, output_folder)
-            except Exception as e:
-                message = "Failed to resize file. Message: {0}.".format(e.strerror)
+            image = self.create_image(image_path)
+            if image is not None:
+                message = "[{0}] Resizing and saving file: '{1}'.".format(index, image.filename)
                 logger.write_log(message)
+
+                try:
+                    image.resize_and_save(length, width, output_folder)
+                except Exception as e:
+                    message = "Failed to resize file. Message: {0}.".format(e.strerror)
+                    logger.write_log(message)
+
 
 class VideoConverter(object):
     input_formats = ['wmv', 'mov']

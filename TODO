@@ -2,6 +2,7 @@
     - Really think about functionality
 - Test VideoConverter
 - Which functions private
+- Do we manipulate function defaults? And does this have impact?
 - Add comments
 - Use Python logging class?
 
