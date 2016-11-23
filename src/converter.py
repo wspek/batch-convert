@@ -24,19 +24,21 @@ class ImageSize(object):
 
 
 class ImageObject(object):
+    __metaclass__ = ABCMeta
+
     def __init__(self, path):
         self.path = path
         self.filename = self.path.split('/')[-1]
         self.extension = self.filename.split('.')[1].lower()
         self.width, self.height = self.size()
 
-    # Abstract method!
+    @abstractmethod
     def size(self):
-        pass
+        raise NotImplementedError("Please implement this method.")
 
-    # Abstract method!
+    @abstractmethod
     def resize_and_save(self, new_length, new_width, output_path):
-        pass
+        raise NotImplementedError("Please implement this method.")
 
     def calc_new_size(self, width, height, max_length, max_width):
         # In this context 'length' means the longest side of the image i.e. the greatest value between height
