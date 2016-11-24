@@ -3,6 +3,7 @@
 """
 import os
 import logger
+import rawpy
 from PIL import Image
 from abc import ABCMeta, abstractmethod
 from enum import Enum
@@ -29,7 +30,8 @@ class ImageObject(object):
     def __init__(self, path):
         self.path = path
         self.filename = self.path.split('/')[-1]
-        self.extension = self.filename.split('.')[1].lower()
+        self.root, extension = self.filename.split('.')
+        self.extension = extension.lower()
         self.width, self.height = self.size()
 
     @abstractmethod
@@ -76,7 +78,25 @@ class JPGImageObject(ImageObject):
 
 
 class NEFImageObject(ImageObject):
-    pass
+    def __init__(self, path):
+        self.raw_image = rawpy.imread(path)
+        super(NEFImageObject, self).__init__(path)
+
+    def size(self):
+        size = self.raw_image.sizes
+        return size.raw_width, size.raw_height
+
+    def resize_and_save(self, new_length, new_width, output_path):
+        image = self.raw_image.postprocess()
+        imageio.imsave('default.nef', image)
+
+        # EXIF data: things like ISO speed, shutter speed, aperture, white balance, camera model etc.
+        # exif = image.info['exif']
+
+    def convert(self):
+        image = Image.fromarray(self.raw_image.postprocess())
+        # image.save(output_path + '/' + self.root + '.jpg')
+        # image.save(output_path + '/' + self.filename)
 
 
 class Converter(object):
@@ -126,8 +146,8 @@ class ImageConverter(Converter):
 
         if extension in ['jpg', 'jpeg']:
             return JPGImageObject(path)
-        # elif extension == 'nef':
-        #     return NEFImageObject(path)
+        elif extension == 'nef':
+            return NEFImageObject(path)
         else:
             message = "Cannot convert '{0}'. File extension not supported.".format(filename)
             logger.write_log(message)

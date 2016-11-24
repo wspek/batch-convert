@@ -2,7 +2,7 @@
     - Really think about functionality
 - Test VideoConverter
 - Which functions private
-- Do we manipulate function defaults? And does this have impact?
+- Clean up resources correctly, especially in NEFImage
 - Add comments
 - Use Python logging class?
 
@@ -11,3 +11,5 @@ X Place retrieve_files inside respective Video / Image classes.
 X Replace logging and message formatting.
 X Convert into using classes.
 X Theory - how to enforce abstract methods (in subclasses).
+X Do we manipulate function defaults? And does this have impact?
+
