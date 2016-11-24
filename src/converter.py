@@ -4,6 +4,7 @@
 import os
 import logger
 import rawpy
+import imageio
 from PIL import Image
 from abc import ABCMeta, abstractmethod
 from enum import Enum
@@ -34,10 +35,20 @@ class ImageObject(object):
         self.extension = extension.lower()
         self.width, self.height = self.size()
 
+    @abstractmethod
     def size(self):
         raise NotImplementedError("Please implement this method.")
 
-    def resize_and_save(self, new_length, new_width, output_path):
+    @abstractmethod
+    def resize(self, new_length, new_width):
+        raise NotImplementedError("Please implement this method.")
+
+    @abstractmethod
+    def save(self, output_path):
+        raise NotImplementedError("Please implement this method.")
+
+    @abstractmethod
+    def save_as_format(self, format, output_path):
         raise NotImplementedError("Please implement this method.")
 
     def calc_new_size(self, width, height, max_length, max_width):
@@ -73,6 +84,9 @@ class JPGImageObject(ImageObject):
     def save(self, output_path):
         self.image.save(output_path + '/' + self.filename, exif=self.exif)
 
+    def save_as_format(self, format, output_path):
+        raise NotImplementedError("Please implement this method.")
+
 
 class NEFImageObject(ImageObject):
     def __init__(self, path):
@@ -83,17 +97,23 @@ class NEFImageObject(ImageObject):
         size = self.raw_image.sizes
         return size.raw_width, size.raw_height
 
-    def resize_and_save(self, new_length, new_width, output_path):
-        image = self.raw_image.postprocess()
-        imageio.imsave('default.nef', image)
+    def resize(self, new_length, new_width):
+        message = "Cannot resize file '{0}'. NEF images cannot be resized.".format(self.filename)
+        raise NotImplementedError(message)
+
+    def save(self, output_path):
+        message = "Cannot save file '{0}'. NEF images can only be read, not written.".format(self.filename)
+        raise NotImplementedError(message)
+
+    def save_as_format(self, file_format, output_path):
+        if file_format in ['jpg', 'jpeg']:
+            file_path = '{0}/{1}.{2}'.format(output_path, self.root, file_format)
+            post_processed = self.raw_image.postprocess(use_camera_wb=True)
+            image = Image.fromarray(post_processed)
+            image.save(file_path)
 
         # EXIF data: things like ISO speed, shutter speed, aperture, white balance, camera model etc.
         # exif = image.info['exif']
-
-    def convert(self):
-        image = Image.fromarray(self.raw_image.postprocess())
-        # image.save(output_path + '/' + self.root + '.jpg')
-        # image.save(output_path + '/' + self.filename)
 
 
 class Converter(object):
@@ -168,6 +188,25 @@ class ImageConverter(Converter):
                     image.save(output_folder)
                 except Exception as e:
                     message = "Failed to resize file. Message: {0}.".format(e.message)
+                    logger.write_log(message)
+
+    def convert_images(self, file_format, input_path, output_folder, subdirectories=True):
+        image_list = self.retrieve_filelist(input_path, subdirectories=subdirectories)
+
+        message = "Number of files to process: " + str(len(image_list))
+        logger.write_log(message)
+
+        # raw_input("\nPress any key to continue...\n")
+
+        for index, image_path in enumerate(image_list):
+            image = self.create_image(image_path)
+            if image is not None:
+                message = "[{0}] Converting and saving file: '{1}'.".format(index, image.filename)
+                logger.write_log(message)
+                try:
+                    image.save_as_format(file_format, output_folder)
+                except Exception as e:
+                    message = "Failed to convert file. Message: {0}.".format(e.message)
                     logger.write_log(message)
 
 

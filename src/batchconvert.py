@@ -133,7 +133,9 @@ class ConversionTool(CommandLineTool):
         if self.vargs["input"]:
             input_folder = self.vargs["input"]
         # else if input files...
-
+        # ...
+        # TODO
+        # ...
         if self.vargs["resize"]:
             new_sizes = self.vargs["resize"]
             length = new_sizes[0]
@@ -141,10 +143,9 @@ class ConversionTool(CommandLineTool):
             include_subdirectories = self.vargs['r']
             ImageConverter().resize_images(length, width, input_folder, output_folder, include_subdirectories)
         if self.vargs["format"]:
-            pass
-
-    def reformat(self):
-        pass
+            file_format = self.vargs["format"][0]
+            include_subdirectories = self.vargs['r']
+            ImageConverter().convert_images(file_format, input_folder, output_folder, include_subdirectories)
 
 
 def main():
