@@ -34,11 +34,9 @@ class ImageObject(object):
         self.extension = extension.lower()
         self.width, self.height = self.size()
 
-    @abstractmethod
     def size(self):
         raise NotImplementedError("Please implement this method.")
 
-    @abstractmethod
     def resize_and_save(self, new_length, new_width, output_path):
         raise NotImplementedError("Please implement this method.")
 
@@ -62,19 +60,18 @@ class ImageObject(object):
 class JPGImageObject(ImageObject):
     def __init__(self, path):
         self.image = Image.open(path)
+        self.exif = self.image.info['exif']  # EXIF data: things like ISO speed, shutter speed, aperture, white balance, camera model etc.
         super(JPGImageObject, self).__init__(path)
 
     def size(self):
         return self.image.width, self.image.height
 
-    def resize_and_save(self, new_length, new_width, output_path):
-        # EXIF data: things like ISO speed, shutter speed, aperture, white balance, camera model etc.
-        exif = self.image.info['exif']
-
+    def resize(self, new_length, new_width):
         new_width, new_height = self.calc_new_size(self.width, self.height, new_length, new_width)
         self.image = self.image.resize((new_width, new_height), Image.ANTIALIAS)
 
-        self.image.save(output_path + '/' + self.filename, exif=exif)
+    def save(self, output_path):
+        self.image.save(output_path + '/' + self.filename, exif=self.exif)
 
 
 class NEFImageObject(ImageObject):
@@ -133,7 +130,7 @@ class Converter(object):
 
 class ImageConverter(Converter):
     input_formats = ['jpg', 'jpeg', 'nef']
-    output_formats = ['jpg', 'jpeg', 'nef']
+    output_formats = ['jpg', 'jpeg']
 
     def valid_format(self, extension):
         # A file is valid if it is in the input list for its type.
@@ -166,11 +163,11 @@ class ImageConverter(Converter):
             if image is not None:
                 message = "[{0}] Resizing and saving file: '{1}'.".format(index, image.filename)
                 logger.write_log(message)
-
                 try:
-                    image.resize_and_save(length, width, output_folder)
+                    image.resize(length, width)
+                    image.save(output_folder)
                 except Exception as e:
-                    message = "Failed to resize file. Message: {0}.".format(e.strerror)
+                    message = "Failed to resize file. Message: {0}.".format(e.message)
                     logger.write_log(message)
 
 
