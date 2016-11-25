@@ -1,10 +1,8 @@
 ## Usage
 
 ```
-Starting execution.
-usage: Batch convert [-h] [-r]
-                     [--format {jpg,jpeg,png} | --resize LENGTH WIDTH]
-                     [--input [FOLDER] | --file [FILE [FILE ...]]]
+usage: Batch convert [-h] [-r] [--format {jpg,jpeg,png}]
+                     [--resize LENGTH WIDTH] [--input [FOLDER] | --file [FILE [FILE ...]]]
                      FOLDER
 
 Convert and resize images and video's.
@@ -19,6 +17,7 @@ optional arguments:
   --resize LENGTH WIDTH     Output image size
   --input [FOLDER]          Input folder
   --file [FILE [FILE ...]]  One or more input files
+
 ```
 
 ## Example usages
@@ -37,3 +36,6 @@ optional arguments:
 
 #### Convert specific images to JPEG and output destination files to a different directory
 `batchconvert --file /home/pc/Pictures/sun.jpg /home/pc/Pictures/tree.jpg --format jpg /home/pc/Pictures/converted`
+
+#### Convert and resize images in folder to PNG and output destination files to a different directory
+`batchconvert --input /home/pc/Pictures --format jpg --resize 4000 3000 /home/pc/Pictures/converted`
