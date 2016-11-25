@@ -126,25 +126,19 @@ class ConversionTool(CommandLineTool):
     ]
 
     def actual_command(self):
-        conversion_data = dict()
+        conversion_data = {
+            "input_folder": self.vargs["input"],
+            "input_files": self.vargs["file"],
+            "include_subdirectories": self.vargs["r"],
+            "resize": self.vargs["resize"],
+            "output_folder": self.vargs["FOLDER"]
+        }
 
-        # If the input consists of a folder...
-        # if self.vargs["input"]:
-        conversion_data["input_folder"] = self.vargs["input"]
-        conversion_data["include_subdirectories"] = self.vargs['r']
-        # else if input files...
-        # ...
-        # TODO
-        # ...
-        # if self.vargs["resize"]:
-        conversion_data["resize"] = self.vargs["resize"]
-
+        # Make sure only one output format gets parsed
         if self.vargs["format"]:
             conversion_data["output_format"] = self.vargs["format"][0]
         else:
             conversion_data["output_format"] = None
-
-        conversion_data["output_folder"] = self.vargs["FOLDER"]
 
         Converter.convert(**conversion_data)
 

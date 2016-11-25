@@ -112,13 +112,8 @@ class NEFMediaObject(MediaObject):
             image = Image.fromarray(post_processed)
             image.save(file_path)
 
-        # EXIF data: things like ISO speed, shutter speed, aperture, white balance, camera model etc.
-        # exif = image.info['exif']
-
 
 class Converter(object):
-    __metaclass__ = ABCMeta
-
     valid_input_formats = ['jpg', 'jpeg', 'nef']
     valid_output_formats = ['jpg', 'jpeg']
 
@@ -135,7 +130,7 @@ class Converter(object):
         message = "Number of files to process: " + str(len(file_list))
         logger.write_log(message)
 
-        # Create a list of media files
+        # Process the list of media files
         for index, media_path in enumerate(file_list):
             media_object = Converter.create_media(media_path)
             if media_object is not None:
