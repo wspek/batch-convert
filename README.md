@@ -21,11 +21,19 @@ optional arguments:
   --file [FILE [FILE ...]]  One or more input files
 ```
 
+## Examples
+
 #### Show help
 `batchconvert -h`
 
-#### Resize images in folder to new image size and output destination files in a different directory
-`batchconvert --input [FOLDER] --resize 3000 2000 FOLDER`
+#### Resize images in folder and output destination files to a different directory
+`batchconvert --input /home/pc/Pictures --resize 3000 2000 /home/pc/Pictures/converted`
 
-#### Convert images in folder to JPEG and output destination files in a different directory
-`batchconvert --input [FOLDER] --format jpg FOLDER`
+#### Resize specific images and output destination files to a different directory
+`batchconvert --file /home/pc/Pictures/sun.jpg /home/pc/Pictures/tree.jpg --resize 3000 2000 /home/pc/Pictures/converted`
+
+#### Convert images in folder to JPEG and output destination files to a different directory
+`batchconvert --input /home/pc/Pictures --format jpg /home/pc/Pictures/converted`
+
+#### Convert specific images to JPEG and output destination files to a different directory
+`batchconvert --file /home/pc/Pictures/sun.jpg /home/pc/Pictures/tree.jpg --format jpg /home/pc/Pictures/converted`

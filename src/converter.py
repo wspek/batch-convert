@@ -144,10 +144,8 @@ class Converter(object):
         if kwargs["input_folder"]:
             file_list = Converter.retrieve_filelist(kwargs["input_folder"],
                                                     kwargs["include_subdirectories"])
-        # else if input files...
-        # ...
-        # TODO
-        # ...
+        else:
+            file_list = kwargs["input_files"]
 
         message = "Number of files to process: " + str(len(file_list))
         logger.write_log(message)
