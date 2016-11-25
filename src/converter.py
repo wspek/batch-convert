@@ -106,16 +106,20 @@ class JPGImageObject(MediaObject):
 
 class NEFImageObject(MediaObject):
     def __init__(self, path):
-        self.rawpy_image = rawpy.imread(path)
+        rawpy_image = rawpy.imread(path)
+        post_processed = rawpy_image.postprocess(no_auto_bright=True, use_camera_wb=True)
+        self.pil_image = Image.fromarray(post_processed)
         super(NEFImageObject, self).__init__(path)
 
     def size(self):
-        size = self.rawpy_image.sizes
-        return size.raw_width, size.raw_height
+        return self.pil_image.width, self.pil_image.height
 
     def resize(self, new_length, new_width):
-        message = "Cannot resize file '{0}'. NEF images cannot be resized.".format(self.filename)
-        raise NotImplementedError(message)
+        message = "Resizing file: '{0}'.".format(self.filename)
+        logger.write_log(message)
+
+        new_width, new_height = self.calc_new_size(self.width, self.height, new_length, new_width)
+        self.pil_image = self.pil_image.resize((new_width, new_height), Image.ANTIALIAS)
 
     def save(self, output_path):
         message = "Cannot save file '{0}'. NEF images can only be read, not written.".format(self.filename)
@@ -123,13 +127,11 @@ class NEFImageObject(MediaObject):
 
     def save_as_format(self, file_format, output_path):
         if file_format in ['jpg', 'jpeg', 'png']:
-            message = "Converting file '{0}' to JPEG.".format(self.filename)
+            message = "Converting file '{0}' to {1}.".format(self.filename, file_format.upper())
             logger.write_log(message)
 
             file_path = '{0}/{1}.{2}'.format(output_path, self.root, file_format)
-            post_processed = self.rawpy_image.postprocess(no_auto_bright=True, use_camera_wb=True)
-            pil_image = Image.fromarray(post_processed)
-            pil_image.save(file_path)
+            self.pil_image.save(file_path)
         else:
             message = "Cannot convert file '{0}'. Extension '{1}' not supported.".format(self.filename)
             logger.write_log(message)
@@ -142,8 +144,7 @@ class Converter(object):
     @staticmethod
     def convert(**kwargs):
         if kwargs["input_folder"]:
-            file_list = Converter.retrieve_filelist(kwargs["input_folder"],
-                                                    kwargs["include_subdirectories"])
+            file_list = Converter.retrieve_filelist(kwargs["input_folder"], kwargs["include_subdirectories"])
         else:
             file_list = kwargs["input_files"]
 
