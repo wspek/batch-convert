@@ -24,8 +24,8 @@ optional arguments:
 #### Show help
 `batchconvert -h`
 
-#### Resize images in folder to new image size and output destination files in a different directory.
+#### Resize images in folder to new image size and output destination files in a different directory
 `batchconvert --input [FOLDER] --resize 3000 2000 FOLDER`
 
-#### Convert images in folder JPEG and output destination files in a different directory.
+#### Convert images in folder to JPEG and output destination files in a different directory
 `batchconvert --input [FOLDER] --format jpg FOLDER`

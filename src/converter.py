@@ -131,7 +131,7 @@ class NEFImageObject(MediaObject):
             pil_image = Image.fromarray(post_processed)
             pil_image.save(file_path)
         else:
-            message = "Cannot convert file '{1}'. Extension '{1}' not supported.".format(self.filename)
+            message = "Cannot convert file '{0}'. Extension '{1}' not supported.".format(self.filename)
             logger.write_log(message)
 
 
@@ -156,21 +156,18 @@ class Converter(object):
         for index, media_path in enumerate(file_list):
             media_object = Converter.create_media(media_path)
             if media_object is not None:
-                if kwargs["output_format"]:
-                    try:
-                        media_object.save_as_format(kwargs["output_format"], kwargs["output_folder"])
-                    except Exception as e:
-                        message = "Failed to convert file. Message: {0}".format(e.message)
-                        logger.write_log(message)
-                if kwargs["resize"]:
-                    new_length = kwargs["resize"][0]
-                    new_width = kwargs["resize"][1]
-                    try:
+                try:
+                    if kwargs["resize"]:
+                        new_length = kwargs["resize"][0]
+                        new_width = kwargs["resize"][1]
                         media_object.resize(new_length, new_width)
+                    if kwargs["output_format"]:
+                        media_object.save_as_format(kwargs["output_format"], kwargs["output_folder"])
+                    else:
                         media_object.save(kwargs["output_folder"])
-                    except Exception as e:
-                        message = "Failed to resize file. Message: {0}".format(e.message)
-                        logger.write_log(message)
+                except Exception as e:
+                    message = "Failed to convert file. Message: {0}".format(e.message)
+                    logger.write_log(message)
 
     @staticmethod
     def retrieve_filelist(dirpath, subdirectories=True):
