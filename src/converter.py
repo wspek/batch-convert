@@ -68,33 +68,49 @@ class MediaObject(object):
         return int(new_width), int(new_height)
 
 
-class JPGMediaObject(MediaObject):
+class JPGImageObject(MediaObject):
     def __init__(self, path):
-        self.image = Image.open(path)
-        self.exif = self.image.info['exif']  # EXIF data: things like ISO speed, shutter speed, aperture, white balance, camera model etc.
-        super(JPGMediaObject, self).__init__(path)
+        self.pil_image = Image.open(path)
+
+        # EXIF data: things like ISO speed, shutter speed, aperture, white balance, camera model etc.
+        self.exif = self.pil_image.info['exif']
+        super(JPGImageObject, self).__init__(path)
 
     def size(self):
-        return self.image.width, self.image.height
+        return self.pil_image.width, self.pil_image.height
 
     def resize(self, new_length, new_width):
+        message = "Resizing file: '{0}'.".format(self.filename)
+        logger.write_log(message)
+
         new_width, new_height = self.calc_new_size(self.width, self.height, new_length, new_width)
-        self.image = self.image.resize((new_width, new_height), Image.ANTIALIAS)
+        self.pil_image = self.pil_image.resize((new_width, new_height), Image.ANTIALIAS)
 
     def save(self, output_path):
-        self.image.save(output_path + '/' + self.filename, exif=self.exif)
+        self.pil_image.save(output_path + '/' + self.filename, exif=self.exif)
 
-    def save_as_format(self, format, output_path):
-        raise NotImplementedError("Please implement this method.")
+    def save_as_format(self, file_format, output_path):
+        if file_format in ['png']:
+            message = "Converting file '{0}' to PNG.".format(self.filename)
+            logger.write_log(message)
+
+            file_path = '{0}/{1}.{2}'.format(output_path, self.root, file_format)
+            self.pil_image.save(file_path)
+        elif file_format in ['jpg', 'jpeg']:
+            message = "Not converting file '{0}'. File is already JPEG.".format(self.filename)
+            logger.write_log(message)
+        else:
+            message = "Cannot convert file '{0}'. Extension '{1}' not supported.".format(self.filename, file_format)
+            logger.write_log(message)
 
 
-class NEFMediaObject(MediaObject):
+class NEFImageObject(MediaObject):
     def __init__(self, path):
-        self.raw_image = rawpy.imread(path)
-        super(NEFMediaObject, self).__init__(path)
+        self.rawpy_image = rawpy.imread(path)
+        super(NEFImageObject, self).__init__(path)
 
     def size(self):
-        size = self.raw_image.sizes
+        size = self.rawpy_image.sizes
         return size.raw_width, size.raw_height
 
     def resize(self, new_length, new_width):
@@ -106,16 +122,22 @@ class NEFMediaObject(MediaObject):
         raise NotImplementedError(message)
 
     def save_as_format(self, file_format, output_path):
-        if file_format in ['jpg', 'jpeg']:
+        if file_format in ['jpg', 'jpeg', 'png']:
+            message = "Converting file '{0}' to JPEG.".format(self.filename)
+            logger.write_log(message)
+
             file_path = '{0}/{1}.{2}'.format(output_path, self.root, file_format)
-            post_processed = self.raw_image.postprocess(use_camera_wb=True)
-            image = Image.fromarray(post_processed)
-            image.save(file_path)
+            post_processed = self.rawpy_image.postprocess(use_camera_wb=True)
+            pil_image = Image.fromarray(post_processed)
+            pil_image.save(file_path)
+        else:
+            message = "Cannot convert file '{1}'. Extension '{1}' not supported.".format(self.filename)
+            logger.write_log(message)
 
 
 class Converter(object):
     valid_input_formats = ['jpg', 'jpeg', 'nef']
-    valid_output_formats = ['jpg', 'jpeg']
+    valid_output_formats = ['jpg', 'jpeg', 'png']
 
     @staticmethod
     def convert(**kwargs):
@@ -134,14 +156,16 @@ class Converter(object):
         for index, media_path in enumerate(file_list):
             media_object = Converter.create_media(media_path)
             if media_object is not None:
-                if kwargs["output_format"] is not None:
-                    media_object.save_as_format(kwargs["output_format"], kwargs["output_folder"])
+                if kwargs["output_format"]:
+                    try:
+                        media_object.save_as_format(kwargs["output_format"], kwargs["output_folder"])
+                    except Exception as e:
+                        message = "Failed to convert file. Message: {0}".format(e.message)
+                        logger.write_log(message)
                 if kwargs["resize"]:
                     new_length = kwargs["resize"][0]
                     new_width = kwargs["resize"][1]
                     try:
-                        message = "[{0}] Resizing file: '{1}'.".format(index, media_object.filename)
-                        logger.write_log(message)
                         media_object.resize(new_length, new_width)
                         media_object.save(kwargs["output_folder"])
                     except Exception as e:
@@ -177,9 +201,9 @@ class Converter(object):
         extension = filename.split('.')[1].lower()
 
         if extension in ['jpg', 'jpeg']:
-            return JPGMediaObject(path)
+            return JPGImageObject(path)
         elif extension == 'nef':
-            return NEFMediaObject(path)
+            return NEFImageObject(path)
         else:
             message = "Cannot convert '{0}'. File extension not supported.".format(filename)
             logger.write_log(message)
