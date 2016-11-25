@@ -97,8 +97,9 @@ class JPGImageObject(MediaObject):
             file_path = '{0}/{1}.{2}'.format(output_path, self.root, file_format)
             self.pil_image.save(file_path)
         elif file_format in ['jpg', 'jpeg']:
-            message = "Not converting file '{0}'. File is already JPEG.".format(self.filename)
+            message = "Resaving file '{0}'. File is already JPEG.".format(self.filename)
             logger.write_log(message)
+            self.save(output_path)
         else:
             message = "Cannot convert file '{0}'. Extension '{1}' not supported.".format(self.filename, file_format)
             logger.write_log(message)

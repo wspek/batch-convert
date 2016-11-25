@@ -106,7 +106,6 @@ class ConversionTool(CommandLineTool):
             "help": "One or more input files"
         },
         {
-            "group": "action",
             "name": "--format",
             "nargs": 1,
             "type": str,
@@ -115,7 +114,6 @@ class ConversionTool(CommandLineTool):
             "choices": formats
         },
         {
-            "group": "action",
             "name": "--resize",
             "nargs": 2,
             "type": int,
@@ -145,31 +143,6 @@ class ConversionTool(CommandLineTool):
 
 def main():
     ConversionTool().run()
-
-    # def run(self):
-    # logger.write_log("Starting execution.", 'w')
-
-    # resize_images('/media/waldo/SSD/Nikon-SDs/Kingston-MicroSD-94749-2',
-    #               '/media/waldo/TRANSCEND-SSD/Photos/Sylvia/Uitzoeken-KINGSTON-SD', subdirectories=True)
-
-    # self.resize_images('/media/waldo/DATA-SHARE/Code/BatchConvert/test/input',
-    #                    '/media/waldo/DATA-SHARE/Code/BatchConvert/test/output',
-    #                    subdirectories=True)
-
-
-    # def run():
-    #     logger.write_log("Starting execution.", 'w')
-    #
-    #     # resize_images('/media/waldo/SSD/Nikon-SDs/Kingston-MicroSD-94749-2',
-    #     #               '/media/waldo/TRANSCEND-SSD/Photos/Sylvia/Uitzoeken-KINGSTON-SD', subdirectories=True)
-    #
-    #     ImageConverter().resize_images('/media/waldo/DATA-SHARE/Code/BatchConvert/test/input',
-    #                                    '/media/waldo/DATA-SHARE/Code/BatchConvert/test/output',
-    #                                    subdirectories=True)
-    #     # convert_video(
-    #     #     '/media/waldo/TRANSCEND-SSD/Film/Video/Travels/New Zealand_2016/New Zealand V - Waikato & King Country.wmv',
-    #     #     '/tmp', 'wmv', 'mp4')
-
 
 if __name__ == '__main__':
     main()
