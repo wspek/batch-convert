@@ -1,8 +1,7 @@
 import sys
 import argparse
 import logger
-from converter import ImageConverter
-from converter import VideoConverter
+from converter import Converter
 
 
 class CommandLineTool(object):
@@ -72,7 +71,7 @@ class CommandLineTool(object):
 
 
 class ConversionTool(CommandLineTool):
-    formats = ImageConverter.output_formats + VideoConverter.output_formats
+    formats = Converter.valid_output_formats
 
     AP_PROGRAM = u"Batch convert"
     AP_DESCRIPTION = u"Convert and resize images and video's."
@@ -127,25 +126,27 @@ class ConversionTool(CommandLineTool):
     ]
 
     def actual_command(self):
-        output_folder = self.vargs["FOLDER"]
+        conversion_data = dict()
 
         # If the input consists of a folder...
-        if self.vargs["input"]:
-            input_folder = self.vargs["input"]
+        # if self.vargs["input"]:
+        conversion_data["input_folder"] = self.vargs["input"]
+        conversion_data["include_subdirectories"] = self.vargs['r']
         # else if input files...
         # ...
         # TODO
         # ...
-        if self.vargs["resize"]:
-            new_sizes = self.vargs["resize"]
-            length = new_sizes[0]
-            width = new_sizes[1]
-            include_subdirectories = self.vargs['r']
-            ImageConverter().resize_images(length, width, input_folder, output_folder, include_subdirectories)
+        # if self.vargs["resize"]:
+        conversion_data["resize"] = self.vargs["resize"]
+
         if self.vargs["format"]:
-            file_format = self.vargs["format"][0]
-            include_subdirectories = self.vargs['r']
-            ImageConverter().convert_images(file_format, input_folder, output_folder, include_subdirectories)
+            conversion_data["output_format"] = self.vargs["format"][0]
+        else:
+            conversion_data["output_format"] = None
+
+        conversion_data["output_folder"] = self.vargs["FOLDER"]
+
+        Converter.convert(**conversion_data)
 
 
 def main():

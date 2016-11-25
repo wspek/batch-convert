@@ -25,7 +25,7 @@ class ImageSize(object):
     ULTRA_HD = {'length': 3840, 'width': 2160}
 
 
-class ImageObject(object):
+class MediaObject(object):
     __metaclass__ = ABCMeta
 
     def __init__(self, path):
@@ -68,11 +68,11 @@ class ImageObject(object):
         return int(new_width), int(new_height)
 
 
-class JPGImageObject(ImageObject):
+class JPGMediaObject(MediaObject):
     def __init__(self, path):
         self.image = Image.open(path)
         self.exif = self.image.info['exif']  # EXIF data: things like ISO speed, shutter speed, aperture, white balance, camera model etc.
-        super(JPGImageObject, self).__init__(path)
+        super(JPGMediaObject, self).__init__(path)
 
     def size(self):
         return self.image.width, self.image.height
@@ -88,10 +88,10 @@ class JPGImageObject(ImageObject):
         raise NotImplementedError("Please implement this method.")
 
 
-class NEFImageObject(ImageObject):
+class NEFMediaObject(MediaObject):
     def __init__(self, path):
         self.raw_image = rawpy.imread(path)
-        super(NEFImageObject, self).__init__(path)
+        super(NEFMediaObject, self).__init__(path)
 
     def size(self):
         size = self.raw_image.sizes
@@ -119,10 +119,42 @@ class NEFImageObject(ImageObject):
 class Converter(object):
     __metaclass__ = ABCMeta
 
-    input_formats = []
-    output_formats = []
+    valid_input_formats = ['jpg', 'jpeg', 'nef']
+    valid_output_formats = ['jpg', 'jpeg']
 
-    def retrieve_filelist(self, dirpath, subdirectories=True):
+    @staticmethod
+    def convert(**kwargs):
+        if kwargs["input_folder"]:
+            file_list = Converter.retrieve_filelist(kwargs["input_folder"],
+                                                    kwargs["include_subdirectories"])
+        # else if input files...
+        # ...
+        # TODO
+        # ...
+
+        message = "Number of files to process: " + str(len(file_list))
+        logger.write_log(message)
+
+        # Create a list of media files
+        for index, media_path in enumerate(file_list):
+            media_object = Converter.create_media(media_path)
+            if media_object is not None:
+                if kwargs["output_format"] is not None:
+                    media_object.save_as_format(kwargs["output_format"], kwargs["output_folder"])
+                if kwargs["resize"]:
+                    new_length = kwargs["resize"][0]
+                    new_width = kwargs["resize"][1]
+                    try:
+                        message = "[{0}] Resizing file: '{1}'.".format(index, media_object.filename)
+                        logger.write_log(message)
+                        media_object.resize(new_length, new_width)
+                        media_object.save(kwargs["output_folder"])
+                    except Exception as e:
+                        message = "Failed to resize file. Message: {0}".format(e.message)
+                        logger.write_log(message)
+
+    @staticmethod
+    def retrieve_filelist(dirpath, subdirectories=True):
         filelist = []
 
         # If we want to traverse the path AND its subdirectories, we use 'os.walk'.
@@ -130,7 +162,7 @@ class Converter(object):
             for (dirpath, dirnames, filenames) in os.walk(dirpath):
                 for filename in filenames:
                     file_extension = os.path.splitext(filename)[1][1:].lower()
-                    if self.valid_format(file_extension):
+                    if Converter.valid_format(file_extension):
                         filelist.append(dirpath + "/" + filename)
         # Else, we are only interested in the files in the passed dirpath.
         else:
@@ -138,116 +170,70 @@ class Converter(object):
                 filepath = os.path.join(dirpath, item)
                 if os.path.isfile(filepath):
                     file_extension = os.path.splitext(item)[1][1:].lower()
-                    if self.valid_format(file_extension):
+                    if Converter.valid_format(file_extension):
                         filelist.append(filepath)
 
         return filelist
 
-    @abstractmethod
-    def valid_format(self, extension):
-        raise NotImplementedError("Please implement this method.")
-
-
-class ImageConverter(Converter):
-    input_formats = ['jpg', 'jpeg', 'nef']
-    output_formats = ['jpg', 'jpeg']
-
-    def valid_format(self, extension):
-        # A file is valid if it is in the input list for its type.
-        return Format.PHOTO and extension in self.input_formats
-
     # Factory
-    def create_image(self, path):
+    @staticmethod
+    def create_media(path):
         filename = path.split('/')[-1]
         extension = filename.split('.')[1].lower()
 
         if extension in ['jpg', 'jpeg']:
-            return JPGImageObject(path)
+            return JPGMediaObject(path)
         elif extension == 'nef':
-            return NEFImageObject(path)
+            return NEFMediaObject(path)
         else:
             message = "Cannot convert '{0}'. File extension not supported.".format(filename)
             logger.write_log(message)
             return None
 
-    def resize_images(self, length, width, input_path, output_folder, subdirectories=True):
-        image_list = self.retrieve_filelist(input_path, subdirectories=subdirectories)
-
-        message = "Number of files to resize: " + str(len(image_list))
-        logger.write_log(message)
-
-        # raw_input("\nPress any key to continue...\n")
-
-        for index, image_path in enumerate(image_list):
-            image = self.create_image(image_path)
-            if image is not None:
-                message = "[{0}] Resizing and saving file: '{1}'.".format(index, image.filename)
-                logger.write_log(message)
-                try:
-                    image.resize(length, width)
-                    image.save(output_folder)
-                except Exception as e:
-                    message = "Failed to resize file. Message: {0}.".format(e.message)
-                    logger.write_log(message)
-
-    def convert_images(self, file_format, input_path, output_folder, subdirectories=True):
-        image_list = self.retrieve_filelist(input_path, subdirectories=subdirectories)
-
-        message = "Number of files to process: " + str(len(image_list))
-        logger.write_log(message)
-
-        # raw_input("\nPress any key to continue...\n")
-
-        for index, image_path in enumerate(image_list):
-            image = self.create_image(image_path)
-            if image is not None:
-                message = "[{0}] Converting and saving file: '{1}'.".format(index, image.filename)
-                logger.write_log(message)
-                try:
-                    image.save_as_format(file_format, output_folder)
-                except Exception as e:
-                    message = "Failed to convert file. Message: {0}.".format(e.message)
-                    logger.write_log(message)
-
-
-class VideoConverter(object):
-    input_formats = ['wmv', 'mov']
-    output_formats = ['mp4']
-
-    def valid_format(self, file_format, extension):
-        # A file is valid if it is in the input list for its type.
-        return file_format == Format.VIDEO and extension in VideoConverter.input_formats
-
     @staticmethod
-    def convert_video(input_path, output_folder, input_format, output_format):
-        # First check whether the requested conversion formats are valid. If not, notify user and return.
-        if input_format.lower() not in VideoConverter.input_formats or \
-                        output_format.lower() not in VideoConverter.output_formats:
-            print "Conversion from '" + input_format + "' to '" + output_format + "' not possible.",
+    def valid_format(extension):
+        # A file is valid if it is in the input list for its type.
+        return extension in Converter.valid_input_formats
 
-            # Print all possible allowed conversion formats to screen.
-            conversions = ((i, o) for i in VideoConverter.input_formats for
-                           o in VideoConverter.output_formats)
-            print "Possible conversions:\n"
-            for i, o in conversions:
-                print i + " -> " + o
-            return
-        # If the input file or folder (path) is invalid, notify the user and return.
-        if not os.path.exists(input_path):
-            print "The path '" + input_path + "' does not seem to exist. Please retry with a valid path."
-            return
-        # If the input path is a directory, list all the video files in the directory for conversion.
-        if os.path.isdir(input_path):
-            inputfiles = [os.path.splitext(f)[0] for f in os.listdir(input_path) if
-                          os.path.splitext(f.lower())[1][1:] in VideoConverter.input_formats]
 
-            for f in inputfiles:
-                os.system('ffmpeg -i "%s/%s.%s" -c:v:1 copy -strict -2 "%s/%s.%s"' % (
-                    input_path, f, input_format, output_folder, f, output_format))
-        # If the input path is a file, then store this as an only element in the list to convert.
-        elif os.path.isfile(input_path):
-            if os.path.splitext(input_path.lower())[1][1:] in VideoConverter.input_formats:
-                inputfile = os.path.splitext(input_path)[0]
-                file_name = inputfile.split('/')[-1]
-            os.system('ffmpeg -i "%s.%s" -c:v:1 copy -strict -2 "%s/%s.%s"' % (
-                inputfile, input_format, output_folder, file_name, output_format))
+# class VideoConverter(object):
+#     input_formats = ['wmv', 'mov']
+#     output_formats = ['mp4']
+#
+#     def valid_format(self, file_format, extension):
+#         # A file is valid if it is in the input list for its type.
+#         return file_format == Format.VIDEO and extension in VideoConverter.input_formats
+#
+#     @staticmethod
+#     def convert_video(input_path, output_folder, input_format, output_format):
+#         # First check whether the requested conversion formats are valid. If not, notify user and return.
+#         if input_format.lower() not in VideoConverter.input_formats or \
+#                         output_format.lower() not in VideoConverter.output_formats:
+#             print "Conversion from '" + input_format + "' to '" + output_format + "' not possible.",
+#
+#             # Print all possible allowed conversion formats to screen.
+#             conversions = ((i, o) for i in VideoConverter.input_formats for
+#                            o in VideoConverter.output_formats)
+#             print "Possible conversions:\n"
+#             for i, o in conversions:
+#                 print i + " -> " + o
+#             return
+#         # If the input file or folder (path) is invalid, notify the user and return.
+#         if not os.path.exists(input_path):
+#             print "The path '" + input_path + "' does not seem to exist. Please retry with a valid path."
+#             return
+#         # If the input path is a directory, list all the video files in the directory for conversion.
+#         if os.path.isdir(input_path):
+#             inputfiles = [os.path.splitext(f)[0] for f in os.listdir(input_path) if
+#                           os.path.splitext(f.lower())[1][1:] in VideoConverter.input_formats]
+#
+#             for f in inputfiles:
+#                 os.system('ffmpeg -i "%s/%s.%s" -c:v:1 copy -strict -2 "%s/%s.%s"' % (
+#                     input_path, f, input_format, output_folder, f, output_format))
+#         # If the input path is a file, then store this as an only element in the list to convert.
+#         elif os.path.isfile(input_path):
+#             if os.path.splitext(input_path.lower())[1][1:] in VideoConverter.input_formats:
+#                 inputfile = os.path.splitext(input_path)[0]
+#                 file_name = inputfile.split('/')[-1]
+#             os.system('ffmpeg -i "%s.%s" -c:v:1 copy -strict -2 "%s/%s.%s"' % (
+#                 inputfile, input_format, output_folder, file_name, output_format))
