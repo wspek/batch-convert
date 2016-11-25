@@ -107,9 +107,10 @@ class JPGImageObject(MediaObject):
 
 class NEFImageObject(MediaObject):
     def __init__(self, path):
-        rawpy_image = rawpy.imread(path)
-        post_processed = rawpy_image.postprocess(no_auto_bright=True, use_camera_wb=True)
-        self.pil_image = Image.fromarray(post_processed)
+        with rawpy.imread(path) as rawpy_image:
+            post_processed = rawpy_image.postprocess(no_auto_bright=True, use_camera_wb=True)
+            self.pil_image = Image.fromarray(post_processed)
+
         super(NEFImageObject, self).__init__(path)
 
     def size(self):

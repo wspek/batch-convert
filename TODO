@@ -1,9 +1,7 @@
 - Add argparser
-    - Resize AND format
 - De factory kan mooier en dynamischer (dictionary met -> extension : class <- misschien?)
 - Test VideoConverter
 - Which functions private
-- Clean up resources correctly, especially in NEFImage
 - Add comments
 - Use Python logging class?
 
@@ -13,4 +11,8 @@ X Replace logging and message formatting.
 X Convert into using classes.
 X Theory - how to enforce abstract methods (in subclasses).
 X Do we manipulate function defaults? And does this have impact?
+X Resize AND format
+X Clean up resources correctly, especially in NEFImage
+
+
 
