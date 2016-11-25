@@ -127,7 +127,7 @@ class NEFImageObject(MediaObject):
             logger.write_log(message)
 
             file_path = '{0}/{1}.{2}'.format(output_path, self.root, file_format)
-            post_processed = self.rawpy_image.postprocess(use_camera_wb=True)
+            post_processed = self.rawpy_image.postprocess(no_auto_bright=True, use_camera_wb=True)
             pil_image = Image.fromarray(post_processed)
             pil_image.save(file_path)
         else:
