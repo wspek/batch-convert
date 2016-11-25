@@ -21,7 +21,7 @@ optional arguments:
   --file [FILE [FILE ...]]  One or more input files
 ```
 
-## Examples
+## Example usages
 
 #### Show help
 `batchconvert -h`

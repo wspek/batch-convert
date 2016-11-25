@@ -1,5 +1,4 @@
 - Add argparser
-    - Really think about functionality
     - Resize AND format
 - De factory kan mooier en dynamischer (dictionary met -> extension : class <- misschien?)
 - Test VideoConverter
