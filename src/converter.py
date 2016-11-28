@@ -4,7 +4,7 @@
 import os
 import logger
 import rawpy
-import imageio
+import subprocess
 from PIL import Image
 from abc import ABCMeta, abstractmethod
 from enum import Enum
@@ -139,8 +139,49 @@ class NEFImageObject(MediaObject):
             logger.write_log(message)
 
 
+class MP4VideoObject(MediaObject):
+    def __init__(self, path):
+        super(MP4VideoObject, self).__init__(path)
+
+    def size(self):
+        try:
+            command = ['ffprobe', '-v', 'error', '-show_entries', 'stream=width,height', '-of',
+                       'default=noprint_wrappers=1', self.path]
+            output = subprocess.check_output(command)
+            width, height = [int(dim.split('=')[1]) for dim in output.strip().split('\n')]
+        except Exception as e:
+            message = "Failed to get size of MP4 object. Exiting. Message: {0}. File: {1}".format(e.message, self.path)
+            logger.write_log(message)
+            exit(1)
+        return width, height
+
+    def save(self, output_path):
+        try:
+            output = output_path + '/' + self.filename
+            command = ['ffmpeg', '-i', self.path, '-vf', 'scale={0}:{1}'.format(self.width, self.height),
+                       '-c:a', 'copy', output, '-hide_banner']
+            subprocess.call(command)
+        except Exception as e:
+            message = "Failed to save MP4 object. Exiting. Message: {0}. File: {1}".format(e.message, self.path)
+            logger.write_log(message)
+
+    def resize(self, new_length, new_width):
+        message = "Resizing file: '{0}'.".format(self.filename)
+        logger.write_log(message)
+
+        width, height = self.calc_new_size(self.width, self.height, new_length, new_width)
+
+        # To resize with ffmpeg we can only use dimensions divisible by 2 (i.e. even numbers)
+        self.width = width + (width % 2)
+        self.height = height + (height % 2)
+        pass
+
+    def save_as_format(self, format, output_path):
+        pass
+
+
 class Converter(object):
-    valid_input_formats = ['jpg', 'jpeg', 'nef']
+    valid_input_formats = ['jpg', 'jpeg', 'nef', 'mp4']
     valid_output_formats = ['jpg', 'jpeg', 'png']
 
     @staticmethod
@@ -154,9 +195,11 @@ class Converter(object):
         logger.write_log(message)
 
         # Process the list of media files
+        num_files = len(file_list)
         for index, media_path in enumerate(file_list):
             media_object = Converter.create_media(media_path)
             if media_object is not None:
+                logger.write_log("Processing file {0}/{1}".format(index, num_files))
                 try:
                     if kwargs["resize"]:
                         new_length = kwargs["resize"][0]
@@ -202,6 +245,8 @@ class Converter(object):
             return JPGImageObject(path)
         elif extension == 'nef':
             return NEFImageObject(path)
+        elif extension == 'mp4':
+            return MP4VideoObject(path)
         else:
             message = "Cannot convert '{0}'. File extension not supported.".format(filename)
             logger.write_log(message)

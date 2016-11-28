@@ -26,16 +26,16 @@ optional arguments:
 `batchconvert -h`
 
 #### Resize images in folder and output destination files to a different directory
-`batchconvert --input /home/pc/Pictures --resize 3000 2000 /home/pc/Pictures/converted`
+`batchconvert --input /home/Pictures --resize 3000 2000 /home/Pictures/new`
 
 #### Resize specific images and output destination files to a different directory
-`batchconvert --file /home/pc/Pictures/sun.jpg /home/pc/Pictures/tree.jpg --resize 3000 2000 /home/pc/Pictures/converted`
+`batchconvert --file /home/Pictures/sun.jpg /home/Pictures/tree.jpg --resize 3000 2000 /home/Pictures/new`
 
 #### Convert images in folder to JPEG and output destination files to a different directory
-`batchconvert --input /home/pc/Pictures --format jpg /home/pc/Pictures/converted`
+`batchconvert --input /home/Pictures --format jpg /home/Pictures/new`
 
 #### Convert specific images to JPEG and output destination files to a different directory
-`batchconvert --file /home/pc/Pictures/sun.jpg /home/pc/Pictures/tree.jpg --format jpg /home/pc/Pictures/converted`
+`batchconvert --file /home/Pictures/sun.jpg /home/Pictures/tree.jpg --format jpg /home/Pictures/new`
 
-#### Convert and resize images in folder to PNG and output destination files to a different directory
-`batchconvert --input /home/pc/Pictures --format jpg --resize 4000 3000 /home/pc/Pictures/converted`
+#### Convert *and* resize images in folder to PNG and output destination files to a different directory
+`batchconvert --input /home/Pictures --format jpg --resize 4000 3000 /home/Pictures/new`

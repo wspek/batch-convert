@@ -1,10 +1,11 @@
-- Add argparser
 - De factory kan mooier en dynamischer (dictionary met -> extension : class <- misschien?)
 - Test VideoConverter
 - Which functions private
 - Add comments
 - Use Python logging class?
+- Additional explanation in -h what input sources are allowed (JPG, NEF)
 
+X Add argparser
 X mutual exclusiveness
 X Place retrieve_files inside respective Video / Image classes.
 X Replace logging and message formatting.
