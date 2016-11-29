@@ -147,9 +147,9 @@ class NEFImageObject(MediaObject):
             logger.write_log(message)
 
 
-class MP4VideoObject(MediaObject):
+class VideoObject(MediaObject):
     def __init__(self, path):
-        super(MP4VideoObject, self).__init__(path)
+        super(VideoObject, self).__init__(path)
 
     def size(self):
         try:
@@ -180,10 +180,9 @@ class MP4VideoObject(MediaObject):
         # To resize with ffmpeg we can only use dimensions divisible by 2 (i.e. even numbers)
         self.width = width + (width % 2)
         self.height = height + (height % 2)
-        pass
 
     def save_as_format(self, file_format, output_path):
-        if file_format in ['avi']:
+        if file_format in ['avi', 'mp4']:
             message = "Converting file '{0}' to {1}.".format(self.filename, file_format.upper())
             logger.write_log(message)
 
@@ -196,8 +195,8 @@ class MP4VideoObject(MediaObject):
 
 
 class Converter(object):
-    valid_input_formats = ['jpg', 'jpeg', 'nef', 'png', 'mp4']
-    valid_output_formats = ['jpg', 'jpeg', 'png', 'avi']
+    valid_input_formats = ['jpg', 'jpeg', 'nef', 'png', 'mp4', 'avi']
+    valid_output_formats = ['jpg', 'jpeg', 'png', 'avi', 'mp4']
 
     @staticmethod
     def convert(**kwargs):
@@ -265,8 +264,8 @@ class Converter(object):
         # Specific file formats follow here
         elif extension == 'nef':
             return NEFImageObject(path)
-        elif extension == 'mp4':
-            return MP4VideoObject(path)
+        elif extension in ['avi', 'mp4']:
+            return VideoObject(path)
         else:
             message = "Cannot convert '{0}'. File extension not supported.".format(filename)
             logger.write_log(message)
@@ -276,46 +275,3 @@ class Converter(object):
     def valid_format(extension):
         # A file is valid if it is in the input list for its type.
         return extension in Converter.valid_input_formats
-
-
-# class VideoConverter(object):
-#     input_formats = ['wmv', 'mov']
-#     output_formats = ['mp4']
-#
-#     def valid_format(self, file_format, extension):
-#         # A file is valid if it is in the input list for its type.
-#         return file_format == Format.VIDEO and extension in VideoConverter.input_formats
-#
-#     @staticmethod
-#     def convert_video(input_path, output_folder, input_format, output_format):
-#         # First check whether the requested conversion formats are valid. If not, notify user and return.
-#         if input_format.lower() not in VideoConverter.input_formats or \
-#                         output_format.lower() not in VideoConverter.output_formats:
-#             print "Conversion from '" + input_format + "' to '" + output_format + "' not possible.",
-#
-#             # Print all possible allowed conversion formats to screen.
-#             conversions = ((i, o) for i in VideoConverter.input_formats for
-#                            o in VideoConverter.output_formats)
-#             print "Possible conversions:\n"
-#             for i, o in conversions:
-#                 print i + " -> " + o
-#             return
-#         # If the input file or folder (path) is invalid, notify the user and return.
-#         if not os.path.exists(input_path):
-#             print "The path '" + input_path + "' does not seem to exist. Please retry with a valid path."
-#             return
-#         # If the input path is a directory, list all the video files in the directory for conversion.
-#         if os.path.isdir(input_path):
-#             inputfiles = [os.path.splitext(f)[0] for f in os.listdir(input_path) if
-#                           os.path.splitext(f.lower())[1][1:] in VideoConverter.input_formats]
-#
-#             for f in inputfiles:
-#                 os.system('ffmpeg -i "%s/%s.%s" -c:v:1 copy -strict -2 "%s/%s.%s"' % (
-#                     input_path, f, input_format, output_folder, f, output_format))
-#         # If the input path is a file, then store this as an only element in the list to convert.
-#         elif os.path.isfile(input_path):
-#             if os.path.splitext(input_path.lower())[1][1:] in VideoConverter.input_formats:
-#                 inputfile = os.path.splitext(input_path)[0]
-#                 file_name = inputfile.split('/')[-1]
-#             os.system('ffmpeg -i "%s.%s" -c:v:1 copy -strict -2 "%s/%s.%s"' % (
-#                 inputfile, input_format, output_folder, file_name, output_format))
