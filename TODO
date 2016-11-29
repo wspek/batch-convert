@@ -4,6 +4,7 @@
 - Add comments
 - Use Python logging class?
 - Additional explanation in -h what input sources are allowed (JPG, NEF)
+- Consistency in the way things are done between methods
 
 X Add argparser
 X mutual exclusiveness
