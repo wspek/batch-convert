@@ -68,13 +68,10 @@ class MediaObject(object):
         return int(new_width), int(new_height)
 
 
-class JPGImageObject(MediaObject):
+class PILImageObject(MediaObject):
     def __init__(self, path):
         self.pil_image = Image.open(path)
-
-        # EXIF data: things like ISO speed, shutter speed, aperture, white balance, camera model etc.
-        self.exif = self.pil_image.info['exif']
-        super(JPGImageObject, self).__init__(path)
+        super(PILImageObject, self).__init__(path)
 
     def size(self):
         return self.pil_image.width, self.pil_image.height
@@ -87,22 +84,33 @@ class JPGImageObject(MediaObject):
         self.pil_image = self.pil_image.resize((new_width, new_height), Image.ANTIALIAS)
 
     def save(self, output_path):
-        self.pil_image.save(output_path + '/' + self.filename, exif=self.exif)
+        self.pil_image.save(output_path + '/' + self.filename)
 
     def save_as_format(self, file_format, output_path):
-        if file_format in ['png']:
-            message = "Converting file '{0}' to PNG.".format(self.filename)
-            logger.write_log(message)
-
-            file_path = '{0}/{1}.{2}'.format(output_path, self.root, file_format)
-            self.pil_image.save(file_path)
-        elif file_format in ['jpg', 'jpeg']:
-            message = "Resaving file '{0}'. File is already JPEG.".format(self.filename)
-            logger.write_log(message)
-            self.save(output_path)
+        if file_format in ['png', 'jpg', 'jpeg']:
+            if self.extension == file_format:
+                message = "Resaving file '{0}'. File is already in {1} format.".format(self.filename, file_format.upper())
+                logger.write_log(message)
+                self.save(output_path)
+            else:
+                message = "Converting file '{0}' to {1}.".format(self.filename, file_format.upper())
+                logger.write_log(message)
+                file_path = '{0}/{1}.{2}'.format(output_path, self.root, file_format)
+                self.pil_image.save(file_path)
         else:
             message = "Cannot convert file '{0}'. Extension '{1}' not supported.".format(self.filename, file_format)
             logger.write_log(message)
+
+
+class EXIFImageObject(PILImageObject):
+    def __init__(self, path):
+        super(EXIFImageObject, self).__init__(path)
+
+        # EXIF data: things like ISO speed, shutter speed, aperture, white balance, camera model etc.
+        self.exif = self.pil_image.info['exif']
+
+    def save(self, output_path):
+        self.pil_image.save(output_path + '/' + self.filename, exif=self.exif)
 
 
 class NEFImageObject(MediaObject):
@@ -188,7 +196,7 @@ class MP4VideoObject(MediaObject):
 
 
 class Converter(object):
-    valid_input_formats = ['jpg', 'jpeg', 'nef', 'mp4']
+    valid_input_formats = ['jpg', 'jpeg', 'nef', 'png', 'mp4']
     valid_output_formats = ['jpg', 'jpeg', 'png', 'avi']
 
     @staticmethod
@@ -206,7 +214,7 @@ class Converter(object):
         for index, media_path in enumerate(file_list):
             media_object = Converter.create_media(media_path)
             if media_object is not None:
-                logger.write_log("Processing file {0}/{1}".format(index, num_files))
+                logger.write_log("Processing file {0}/{1}".format(index+1, num_files))
                 try:
                     if kwargs["resize"]:
                         new_length = kwargs["resize"][0]
@@ -248,8 +256,13 @@ class Converter(object):
         filename = path.split('/')[-1]
         extension = filename.split('.')[1].lower()
 
+        # If the input file is a file with EXIF data:
         if extension in ['jpg', 'jpeg']:
-            return JPGImageObject(path)
+            return EXIFImageObject(path)
+        # If the input file is a generic image file (without EXIF data):
+        elif extension in ['png']:
+            return PILImageObject(path)
+        # Specific file formats follow here
         elif extension == 'nef':
             return NEFImageObject(path)
         elif extension == 'mp4':
