@@ -153,9 +153,10 @@ class VideoObject(MediaObject):
 
     def size(self):
         try:
-            command = 'ffprobe -v error -show_entries stream=width,height -of default=noprint_wrappers=1 {0}'.format(self.path)
+            command = 'ffprobe -v error -show_entries stream=width,height -select_streams v:0 ' \
+                      '-of default=noprint_wrappers=1 {0}'.format(self.path)
             output = subprocess.check_output(command.split())
-            width, height = [int(dim.split('=')[1]) for dim in output.strip().split('\n')]
+            width, height = [int(dim.split('=')[1]) for dim in output.strip().split('\n') if dim]
         except Exception as e:
             message = "Failed to get size of MP4 object. Exiting. Message: {0}. File: {1}".format(e.message, self.path)
             logger.write_log(message)
@@ -165,10 +166,10 @@ class VideoObject(MediaObject):
     def save(self, output_path):
         try:
             output = output_path + '/' + self.filename
-            command = 'ffmpeg -i {0} -vf scale={1}:{2} -c:a copy {3} -hide_banner'.format(self.path, self.width, self.height, output)
+            command = 'ffmpeg -i {0} -vf scale={1}:{2} -strict -2 {3} -hide_banner'.format(self.path, self.width, self.height, output)
             subprocess.call(command.split())
         except Exception as e:
-            message = "Failed to save MP4 object. Exiting. Message: {0}. File: {1}".format(e.message, self.path)
+            message = "Failed to save video object. Exiting. Message: {0}. File: {1}".format(e.message, self.path)
             logger.write_log(message)
 
     def resize(self, new_length, new_width):
@@ -182,12 +183,12 @@ class VideoObject(MediaObject):
         self.height = height + (height % 2)
 
     def save_as_format(self, file_format, output_path):
-        if file_format in ['avi', 'mp4']:
+        if file_format in ['avi', 'mp4', 'wmv', 'mov']:
             message = "Converting file '{0}' to {1}.".format(self.filename, file_format.upper())
             logger.write_log(message)
 
             file_path = '{0}/{1}.{2}'.format(output_path, self.root, file_format)
-            command = 'ffmpeg -i {0} -vf scale={1}:{2} -c:a copy {3} -hide_banner'.format(self.path, self.width, self.height, file_path)
+            command = 'ffmpeg -i {0} -vf scale={1}:{2} -strict -2 {3} -hide_banner'.format(self.path, self.width, self.height, file_path)
             subprocess.call(command.split())
         else:
             message = "Cannot convert file '{0}'. Extension '{1}' not supported.".format(self.filename, file_format)
@@ -195,8 +196,8 @@ class VideoObject(MediaObject):
 
 
 class Converter(object):
-    valid_input_formats = ['jpg', 'jpeg', 'nef', 'png', 'mp4', 'avi']
-    valid_output_formats = ['jpg', 'jpeg', 'png', 'avi', 'mp4']
+    valid_input_formats = ['jpg', 'jpeg', 'nef', 'png', 'mp4', 'avi', 'wmv', 'mov']
+    valid_output_formats = ['jpg', 'jpeg', 'png', 'avi', 'mp4', 'wmv', 'mov']
 
     @staticmethod
     def convert(**kwargs):
@@ -264,7 +265,7 @@ class Converter(object):
         # Specific file formats follow here
         elif extension == 'nef':
             return NEFImageObject(path)
-        elif extension in ['avi', 'mp4']:
+        elif extension in ['avi', 'mp4', 'wmv', 'mov']:
             return VideoObject(path)
         else:
             message = "Cannot convert '{0}'. File extension not supported.".format(filename)
