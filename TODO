@@ -1,4 +1,3 @@
-- wmv to mp4
 - De factory kan mooier en dynamischer (dictionary met -> extension : class <- misschien?)
 - Which functions private
 - Add comments
@@ -17,6 +16,7 @@ X Do we manipulate function defaults? And does this have impact?
 X Resize AND format
 X Clean up resources correctly, especially in NEFImage
 X Test VideoConverter
+X wmv to mp4
 
 
 

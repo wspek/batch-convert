@@ -24,7 +24,7 @@ class CommandLineTool(object):
         self.parser = argparse.ArgumentParser(
             prog=self.AP_PROGRAM,
             description=self.AP_DESCRIPTION,
-            formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=32)
+            formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=64)
         )
         self.vargs = None
 

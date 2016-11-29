@@ -1,23 +1,23 @@
 ## Usage
 
 ```
-usage: Batch convert [-h] [-r] [--format {jpg,jpeg,png}]
-                     [--resize LENGTH WIDTH] [--input [FOLDER] | --file [FILE [FILE ...]]]
+usage: Batch convert [-h] [-r] [--format {jpg,jpeg,png,avi,mp4,wmv,mov}]
+                     [--resize LENGTH WIDTH] [--input [FOLDER] | --file
+                     [FILE [FILE ...]]]
                      FOLDER
 
 Convert and resize images and video's.
 
 positional arguments:
-  FOLDER                    Output folder
+  FOLDER                                   Output folder
 
 optional arguments:
-  -h, --help                show this help message and exit
-  -r                        Include subfolders
-  --format {jpg,jpeg,png}   Output format after conversion
-  --resize LENGTH WIDTH     Output image size
-  --input [FOLDER]          Input folder
-  --file [FILE [FILE ...]]  One or more input files
-
+  -h, --help                               show this help message and exit
+  -r                                       Include subfolders
+  --format {jpg,jpeg,png,avi,mp4,wmv,mov}  Output format after conversion
+  --resize LENGTH WIDTH                    Output image size
+  --input [FOLDER]                         Input folder
+  --file [FILE [FILE ...]]                 One or more input files
 ```
 
 ## Example usages
@@ -39,3 +39,6 @@ optional arguments:
 
 #### Convert *and* resize images in folder to PNG and output destination files to a different directory
 `batchconvert --input /home/Pictures --format jpg --resize 4000 3000 /home/Pictures/new`
+
+#### Convert *and* resize videos in folder to MP4 and output destination files to a different directory
+`batchconvert --input /home/Videos --format mp4 --resize 400 300 /home/Videos/new`
