@@ -211,13 +211,13 @@ class VideoObject(MediaObject):
 
 class Converter(object):
     def __init__(self):
-        self.valid_input_formats = Converter.input_formats()
-        self.valid_output_formats = Converter.output_formats()
+        self.valid_input_formats = self.input_formats()
+        self.valid_output_formats = list(set(self.output_formats().keys()))
 
     @staticmethod
     def input_formats():
         formats = dict()
-        media_classes = Converter.subclasses(MediaObject)
+        media_classes = subclasses(MediaObject)
         for media_class in media_classes:
             for input_format in media_class.input_formats:
                 formats[input_format] = media_class
@@ -226,36 +226,13 @@ class Converter(object):
 
     @staticmethod
     def output_formats():
-        formats = []
-        media_classes = Converter.subclasses(MediaObject)
+        formats = dict()
+        media_classes = subclasses(MediaObject)
         for media_class in media_classes:
             for output_format in media_class.output_formats:
-                formats.append(output_format)
+                formats[output_format] = media_class
 
-        # To remove duplicates will convert the list to a set...and convert that into a list again.
-        return list(set(formats))
-
-    @staticmethod
-    def subclasses(cls):
-        # Retrieve the subclasses of class 'cls'
-        subclasses = cls.__subclasses__()
-
-        # Retrieve all nested subclasses and merge the nested subclasses with the already present list of subclasses
-        nested_subclasses = subclasses + [Converter.subclasses(c) for c in subclasses]
-
-        # Remove any empty lists in the total list
-        cleaned_up = [subclass for subclass in nested_subclasses if subclass]
-
-        # Flatten the list.
-        flattened = []
-        for sublist in cleaned_up:
-            if isinstance(sublist, list):
-                for val in sublist:
-                    flattened.append(val)
-            else:
-                flattened.append(sublist)
-
-        return flattened
+        return formats
 
     def retrieve_filelist(self, dirpath, subdirectories=True):
         filelist = []
@@ -324,3 +301,25 @@ class Converter(object):
         except KeyError:
             message = "Cannot convert '{0}'. File extension not supported.".format(filename)
             logger.write_log(message)
+
+
+def subclasses(cls):
+    # Retrieve the subclasses of class 'cls'
+    subclass_list = cls.__subclasses__()
+
+    # Retrieve all nested subclasses and merge the nested subclasses with the already present list of subclasses
+    nested_subclasses = subclass_list + [subclasses(c) for c in subclass_list]
+
+    # Remove any empty lists in the total list
+    cleaned_up = [subclass for subclass in nested_subclasses if subclass]
+
+    # Flatten the list.
+    flattened = []
+    for sublist in cleaned_up:
+        if isinstance(sublist, list):
+            for val in sublist:
+                flattened.append(val)
+        else:
+            flattened.append(sublist)
+
+    return flattened
