@@ -211,29 +211,28 @@ class VideoObject(MediaObject):
 
 class Converter(object):
     def __init__(self):
-        self.input_classes = self.input_formats()
-        self.valid_input_formats = list(set(self.input_classes.keys()))
-        self.valid_output_formats = list(set(self.output_formats().keys()))
+        self.valid_input_formats = self.valid_input_formats()
+        self.valid_output_formats = self.valid_output_formats()
 
     @staticmethod
-    def input_formats():
-        formats = dict()
+    def valid_input_formats():
+        formats = []
         media_classes = subclasses(MediaObject)
         for media_class in media_classes:
             for input_format in media_class.input_formats:
-                formats[input_format] = media_class
+                formats.append(input_format)
 
-        return formats
+        return list(set(formats))
 
     @staticmethod
-    def output_formats():
-        formats = dict()
+    def valid_output_formats():
+        formats = []
         media_classes = subclasses(MediaObject)
         for media_class in media_classes:
             for output_format in media_class.output_formats:
-                formats[output_format] = media_class
+                formats.append(output_format)
 
-        return formats
+        return list(set(formats))
 
     def retrieve_filelist(self, dirpath, subdirectories=True):
         filelist = []
@@ -271,8 +270,9 @@ class Converter(object):
 
         # Process the list of media files
         num_files = len(file_list)
+        factory = MediaFactory()
         for index, media_path in enumerate(file_list):
-            media_object = self.create_media(media_path)
+            media_object = factory.generate(media_path)
             if media_object is not None:
                 logger.write_log("Processing file {0}/{1}".format(index+1, num_files))
                 try:
@@ -289,20 +289,33 @@ class Converter(object):
                     logger.write_log(message)
 
 
-    # Factory
-    def create_media(self, path):
+class MediaFactory(object):
+    def __init__(self):
+        self.input_class_dict = self.format_mapping()
+
+    def generate(self, path):
         filename = path.split('/')[-1]
         extension = filename.split('.')[1].lower()
 
         try:
             # Retrieve the appropriate media class belonging to this extension
-            media_class = self.input_classes[extension]
+            media_class = self.input_class_dict[extension]
 
             # Create an instance of the media class and return it
             return media_class(path)
         except KeyError:
             message = "Cannot convert '{0}'. File extension not supported.".format(filename)
             logger.write_log(message)
+
+    @staticmethod
+    def format_mapping():
+        formats = dict()
+        media_classes = subclasses(MediaObject)
+        for media_class in media_classes:
+            for input_format in media_class.input_formats:
+                formats[input_format] = media_class
+
+        return formats
 
 
 def subclasses(cls):
