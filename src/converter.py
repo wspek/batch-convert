@@ -211,7 +211,8 @@ class VideoObject(MediaObject):
 
 class Converter(object):
     def __init__(self):
-        self.valid_input_formats = self.input_formats()
+        self.input_classes = self.input_formats()
+        self.valid_input_formats = list(set(self.input_classes.keys()))
         self.valid_output_formats = list(set(self.output_formats().keys()))
 
     @staticmethod
@@ -256,7 +257,7 @@ class Converter(object):
 
     def valid_format(self, extension):
         # A file is valid if it is in the input list for its type.
-        return extension in self.valid_input_formats.keys()
+        return extension in self.valid_input_formats
 
     def convert(self, **conversion_data):
         if conversion_data["input_folder"]:
@@ -287,6 +288,7 @@ class Converter(object):
                     message = "Failed to convert file. Message: {0}".format(e.message)
                     logger.write_log(message)
 
+
     # Factory
     def create_media(self, path):
         filename = path.split('/')[-1]
@@ -294,7 +296,7 @@ class Converter(object):
 
         try:
             # Retrieve the appropriate media class belonging to this extension
-            media_class = self.valid_input_formats[extension]
+            media_class = self.input_classes[extension]
 
             # Create an instance of the media class and return it
             return media_class(path)

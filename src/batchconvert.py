@@ -72,10 +72,10 @@ class CommandLineTool(object):
 
 class ConversionTool(CommandLineTool):
     converter = Converter()
-    formats = converter.valid_output_formats
+    input_formats = ', '.join(converter.valid_input_formats).upper()
 
     AP_PROGRAM = u"Batch convert"
-    AP_DESCRIPTION = u"Convert and resize images and video's."
+    AP_DESCRIPTION = u"Convert and resize images and video's. Allowed input formats are: {0}.".format(input_formats)
     AP_ARGUMENTS = [
         {
             "name": "FOLDER",
@@ -112,7 +112,7 @@ class ConversionTool(CommandLineTool):
             "type": str,
             "default": None,
             "help": "Output format after conversion",
-            "choices": formats
+            "choices": converter.valid_output_formats
         },
         {
             "name": "--resize",
