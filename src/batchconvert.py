@@ -71,7 +71,7 @@ class CommandLineTool(object):
 
 
 class ConversionTool(CommandLineTool):
-    formats = Converter.valid_output_formats
+    formats = Converter.output_formats()
 
     AP_PROGRAM = u"Batch convert"
     AP_DESCRIPTION = u"Convert and resize images and video's."

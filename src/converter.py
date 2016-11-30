@@ -29,6 +29,8 @@ class ImageSize(object):
 class MediaObject(object):
     __metaclass__ = ABCMeta
 
+    input_formats = []
+
     def __init__(self, path):
         self.path = path
         self.filename = self.path.split('/')[-1]
@@ -70,6 +72,9 @@ class MediaObject(object):
 
 
 class PILImageObject(MediaObject):
+    input_formats = ['png']
+    output_formats = ['png', 'jpg', 'jpeg']
+
     def __init__(self, path):
         self.pil_image = Image.open(path)
         super(PILImageObject, self).__init__(path)
@@ -88,7 +93,7 @@ class PILImageObject(MediaObject):
         self.pil_image.save(output_path + '/' + self.filename)
 
     def save_as_format(self, file_format, output_path):
-        if file_format in ['png', 'jpg', 'jpeg']:
+        if file_format in self.output_formats:
             if self.extension == file_format:
                 message = "Resaving file '{0}'. File is already in {1} format.".format(self.filename, file_format.upper())
                 logger.write_log(message)
@@ -104,6 +109,8 @@ class PILImageObject(MediaObject):
 
 
 class EXIFImageObject(PILImageObject):
+    input_formats = ['jpg', 'jpeg']
+
     def __init__(self, path):
         super(EXIFImageObject, self).__init__(path)
 
@@ -115,6 +122,9 @@ class EXIFImageObject(PILImageObject):
 
 
 class NEFImageObject(MediaObject):
+    input_formats = ['nef']
+    output_formats = ['jpg', 'jpeg', 'png']
+
     def __init__(self, path):
         with rawpy.imread(path) as rawpy_image:
             post_processed = rawpy_image.postprocess(no_auto_bright=True, use_camera_wb=True)
@@ -137,7 +147,7 @@ class NEFImageObject(MediaObject):
         raise NotImplementedError(message)
 
     def save_as_format(self, file_format, output_path):
-        if file_format in ['jpg', 'jpeg', 'png']:
+        if file_format in self.output_formats:
             message = "Converting file '{0}' to {1}.".format(self.filename, file_format.upper())
             logger.write_log(message)
 
@@ -149,6 +159,9 @@ class NEFImageObject(MediaObject):
 
 
 class VideoObject(MediaObject):
+    input_formats = ['avi', 'mp4', 'wmv', 'mov']
+    output_formats = ['avi', 'mp4', 'wmv', 'mov']
+
     def __init__(self, path):
         super(VideoObject, self).__init__(path)
 
@@ -184,7 +197,7 @@ class VideoObject(MediaObject):
         self.height = height + (height % 2)
 
     def save_as_format(self, file_format, output_path):
-        if file_format in ['avi', 'mp4', 'wmv', 'mov']:
+        if file_format in self.output_formats:
             message = "Converting file '{0}' to {1}.".format(self.filename, file_format.upper())
             logger.write_log(message)
 
@@ -197,25 +210,43 @@ class VideoObject(MediaObject):
 
 
 class Converter(object):
-
-    valid_input_formats = ['jpg', 'jpeg', 'nef', 'png', 'mp4', 'avi', 'wmv', 'mov']
-    valid_output_formats = ['jpg', 'jpeg', 'png', 'avi', 'mp4', 'wmv', 'mov']
-
     def __init__(self):
-        available_classes = self.media_list(MediaObject)
-        pass
+        self.valid_input_formats = Converter.input_formats()
+        self.valid_output_formats = Converter.output_formats()
 
-    def media_list(self, cls):
-        # Retrieve all subclasses
+    @staticmethod
+    def input_formats():
+        formats = dict()
+        media_classes = Converter.subclasses(MediaObject)
+        for media_class in media_classes:
+            for input_format in media_class.input_formats:
+                formats[input_format] = media_class
+
+        return formats
+
+    @staticmethod
+    def output_formats():
+        formats = []
+        media_classes = Converter.subclasses(MediaObject)
+        for media_class in media_classes:
+            for output_format in media_class.output_formats:
+                formats.append(output_format)
+
+        # To remove duplicates will convert the list to a set...and convert that into a list again.
+        return list(set(formats))
+
+    @staticmethod
+    def subclasses(cls):
+        # Retrieve the subclasses of class 'cls'
         subclasses = cls.__subclasses__()
 
-        # Retrieve all nested subclasses and merge the nested subclasses with the subclasses
-        nested_subclasses = subclasses + [self.media_list(c) for c in subclasses]
+        # Retrieve all nested subclasses and merge the nested subclasses with the already present list of subclasses
+        nested_subclasses = subclasses + [Converter.subclasses(c) for c in subclasses]
 
         # Remove any empty lists in the total list
         cleaned_up = [subclass for subclass in nested_subclasses if subclass]
 
-        # There may be lists of subclass lists in the cleaned up list. Flatten the list.
+        # Flatten the list.
         flattened = []
         for sublist in cleaned_up:
             if isinstance(sublist, list):
@@ -226,37 +257,7 @@ class Converter(object):
 
         return flattened
 
-    @staticmethod
-    def convert(**kwargs):
-        if kwargs["input_folder"]:
-            file_list = Converter.retrieve_filelist(kwargs["input_folder"], kwargs["include_subdirectories"])
-        else:
-            file_list = kwargs["input_files"]
-
-        message = "Number of files to process: " + str(len(file_list))
-        logger.write_log(message)
-
-        # Process the list of media files
-        num_files = len(file_list)
-        for index, media_path in enumerate(file_list):
-            media_object = Converter.create_media(media_path)
-            if media_object is not None:
-                logger.write_log("Processing file {0}/{1}".format(index+1, num_files))
-                try:
-                    if kwargs["resize"]:
-                        new_length = kwargs["resize"][0]
-                        new_width = kwargs["resize"][1]
-                        media_object.resize(new_length, new_width)
-                    if kwargs["output_format"]:
-                        media_object.save_as_format(kwargs["output_format"], kwargs["output_folder"])
-                    else:
-                        media_object.save(kwargs["output_folder"])
-                except Exception as e:
-                    message = "Failed to convert file. Message: {0}".format(e.message)
-                    logger.write_log(message)
-
-    @staticmethod
-    def retrieve_filelist(dirpath, subdirectories=True):
+    def retrieve_filelist(self, dirpath, subdirectories=True):
         filelist = []
 
         # If we want to traverse the path AND its subdirectories, we use 'os.walk'.
@@ -264,7 +265,7 @@ class Converter(object):
             for (dirpath, dirnames, filenames) in os.walk(dirpath):
                 for filename in filenames:
                     file_extension = os.path.splitext(filename)[1][1:].lower()
-                    if Converter.valid_format(file_extension):
+                    if self.valid_format(file_extension):
                         filelist.append(dirpath + "/" + filename)
         # Else, we are only interested in the files in the passed dirpath.
         else:
@@ -272,34 +273,54 @@ class Converter(object):
                 filepath = os.path.join(dirpath, item)
                 if os.path.isfile(filepath):
                     file_extension = os.path.splitext(item)[1][1:].lower()
-                    if Converter.valid_format(file_extension):
+                    if self.valid_format(file_extension):
                         filelist.append(filepath)
-
         return filelist
 
+    def valid_format(self, extension):
+        # A file is valid if it is in the input list for its type.
+        return extension in self.valid_input_formats.keys()
+
+    def convert(self, **conversion_data):
+        if conversion_data["input_folder"]:
+            file_list = self.retrieve_filelist(conversion_data["input_folder"],
+                                               conversion_data["include_subdirectories"])
+        else:
+            file_list = conversion_data["input_files"]
+
+        message = "Number of files to process: " + str(len(file_list))
+        logger.write_log(message)
+
+        # Process the list of media files
+        num_files = len(file_list)
+        for index, media_path in enumerate(file_list):
+            media_object = self.create_media(media_path)
+            if media_object is not None:
+                logger.write_log("Processing file {0}/{1}".format(index+1, num_files))
+                try:
+                    if conversion_data["resize"]:
+                        new_length = conversion_data["resize"][0]
+                        new_width = conversion_data["resize"][1]
+                        media_object.resize(new_length, new_width)
+                    if conversion_data["output_format"]:
+                        media_object.save_as_format(conversion_data["output_format"], conversion_data["output_folder"])
+                    else:
+                        media_object.save(conversion_data["output_folder"])
+                except Exception as e:
+                    message = "Failed to convert file. Message: {0}".format(e.message)
+                    logger.write_log(message)
+
     # Factory
-    @staticmethod
-    def create_media(path):
+    def create_media(self, path):
         filename = path.split('/')[-1]
         extension = filename.split('.')[1].lower()
 
-        # If the input file is a file with EXIF data:
-        if extension in ['jpg', 'jpeg']:
-            return EXIFImageObject(path)
-        # If the input file is a generic image file (without EXIF data):
-        elif extension in ['png']:
-            return PILImageObject(path)
-        # Specific file formats follow here
-        elif extension == 'nef':
-            return NEFImageObject(path)
-        elif extension in ['avi', 'mp4', 'wmv', 'mov']:
-            return VideoObject(path)
-        else:
+        try:
+            # Retrieve the appropriate media class belonging to this extension
+            media_class = self.valid_input_formats[extension]
+
+            # Create an instance of the media class and return it
+            return media_class(path)
+        except KeyError:
             message = "Cannot convert '{0}'. File extension not supported.".format(filename)
             logger.write_log(message)
-            return None
-
-    @staticmethod
-    def valid_format(extension):
-        # A file is valid if it is in the input list for its type.
-        return extension in Converter.valid_input_formats
