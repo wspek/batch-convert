@@ -5,6 +5,7 @@ import os
 import logger
 import rawpy
 import subprocess
+import itertools
 from PIL import Image
 from abc import ABCMeta, abstractmethod
 from enum import Enum
@@ -196,8 +197,34 @@ class VideoObject(MediaObject):
 
 
 class Converter(object):
+
     valid_input_formats = ['jpg', 'jpeg', 'nef', 'png', 'mp4', 'avi', 'wmv', 'mov']
     valid_output_formats = ['jpg', 'jpeg', 'png', 'avi', 'mp4', 'wmv', 'mov']
+
+    def __init__(self):
+        available_classes = self.media_list(MediaObject)
+        pass
+
+    def media_list(self, cls):
+        # Retrieve all subclasses
+        subclasses = cls.__subclasses__()
+
+        # Retrieve all nested subclasses and merge the nested subclasses with the subclasses
+        nested_subclasses = subclasses + [self.media_list(c) for c in subclasses]
+
+        # Remove any empty lists in the total list
+        cleaned_up = [subclass for subclass in nested_subclasses if subclass]
+
+        # There may be lists of subclass lists in the cleaned up list. Flatten the list.
+        flattened = []
+        for sublist in cleaned_up:
+            if isinstance(sublist, list):
+                for val in sublist:
+                    flattened.append(val)
+            else:
+                flattened.append(sublist)
+
+        return flattened
 
     @staticmethod
     def convert(**kwargs):

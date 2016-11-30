@@ -138,7 +138,7 @@ class ConversionTool(CommandLineTool):
         else:
             conversion_data["output_format"] = None
 
-        Converter.convert(**conversion_data)
+        Converter().convert(**conversion_data)
 
 
 def main():
