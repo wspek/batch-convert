@@ -121,14 +121,6 @@ class EXIFImageObject(PILImageObject):
         self.pil_image.save(output_path + '/' + self.filename, exif=self.exif)
 
 
-class TEST1ImageObject(PILImageObject):
-    pass
-
-
-class TEST2ImageObject(PILImageObject):
-    pass
-
-
 class NEFImageObject(MediaObject):
     input_formats = ['nef']
     output_formats = ['jpg', 'jpeg', 'png']
@@ -223,7 +215,7 @@ class Converter(object):
         self.valid_output_formats = self.valid_output_formats()
 
     @staticmethod
-    def valid_input_formats():
+    def valid_input_formats(): # TODO: use of set comprehension
         formats = []
         media_classes = subclasses(MediaObject)
         for media_class in media_classes:
@@ -317,20 +309,21 @@ class MediaFactory(object):
 
     @staticmethod
     def format_mapping():
-        formats = dict()
         media_classes = subclasses(MediaObject)
-        for media_class in media_classes:   # TODO: Rewrite with (double) list comprehension
-            for input_format in media_class.input_formats:
-                formats[input_format] = media_class
+        formats = {input_format: media_class for media_class in media_classes for input_format in media_class.input_formats}
 
         return formats
 
 
 # TODO: Learn where a suitable place would be to put this function
 def subclasses(cls):
-    # Retrieve the subclasses of class 'cls' and create a list of all subclasses and their children.
-    # Only recurse into 'subclasses(cls)' if there are indeed children. Otherwise empty lists will be added to the list.
     subclass_list = cls.__subclasses__()
+
+    # RECURSIVE FUNCTIONALITY
+    # Create a list of all subclasses and their children.
+    # Only recurse into 'subclasses(cls)' if there are indeed children.
     children_list = [subclasses(c) for c in subclass_list if c.__subclasses__()]
+
+    # If there are lists inside the list, then flatten the list
     flattened_list = list(itertools.chain(*children_list))
     return subclass_list + flattened_list
