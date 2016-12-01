@@ -121,6 +121,14 @@ class EXIFImageObject(PILImageObject):
         self.pil_image.save(output_path + '/' + self.filename, exif=self.exif)
 
 
+class TEST1ImageObject(PILImageObject):
+    pass
+
+
+class TEST2ImageObject(PILImageObject):
+    pass
+
+
 class NEFImageObject(MediaObject):
     input_formats = ['nef']
     output_formats = ['jpg', 'jpeg', 'png']
@@ -311,30 +319,18 @@ class MediaFactory(object):
     def format_mapping():
         formats = dict()
         media_classes = subclasses(MediaObject)
-        for media_class in media_classes:
+        for media_class in media_classes:   # TODO: Rewrite with (double) list comprehension
             for input_format in media_class.input_formats:
                 formats[input_format] = media_class
 
         return formats
 
 
+# TODO: Learn where a suitable place would be to put this function
 def subclasses(cls):
-    # Retrieve the subclasses of class 'cls'
+    # Retrieve the subclasses of class 'cls' and create a list of all subclasses and their children.
+    # Only recurse into 'subclasses(cls)' if there are indeed children. Otherwise empty lists will be added to the list.
     subclass_list = cls.__subclasses__()
-
-    # Retrieve all nested subclasses and merge the nested subclasses with the already present list of subclasses
-    nested_subclasses = subclass_list + [subclasses(c) for c in subclass_list]
-
-    # Remove any empty lists in the total list
-    cleaned_up = [subclass for subclass in nested_subclasses if subclass]
-
-    # Flatten the list.
-    flattened = []
-    for sublist in cleaned_up:
-        if isinstance(sublist, list):
-            for val in sublist:
-                flattened.append(val)
-        else:
-            flattened.append(sublist)
-
-    return flattened
+    children_list = [subclasses(c) for c in subclass_list if c.__subclasses__()]
+    flattened_list = list(itertools.chain(*children_list))
+    return subclass_list + flattened_list
