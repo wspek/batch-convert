@@ -30,6 +30,7 @@ class MediaObject(object):
     __metaclass__ = ABCMeta
 
     input_formats = []
+    output_formats = []
 
     def __init__(self, path):
         self.path = path
@@ -135,7 +136,7 @@ class NEFImageObject(MediaObject):
     def size(self):
         return self.pil_image.width, self.pil_image.height
 
-    def resize(self, new_length, new_width):
+    def resize(self, new_length, new_width): # TODO: Is NEFImage not really just a PILImageObject? Duplicate code?
         message = "Resizing file: '{0}'.".format(self.filename)
         logger.write_log(message)
 
@@ -215,24 +216,22 @@ class Converter(object):
         self.valid_output_formats = self.valid_output_formats()
 
     @staticmethod
-    def valid_input_formats(): # TODO: use of set comprehension
-        formats = []
-        media_classes = subclasses(MediaObject)
-        for media_class in media_classes:
-            for input_format in media_class.input_formats:
-                formats.append(input_format)
-
-        return list(set(formats))
+    def valid_input_formats():  # TODO: Should this function be static and why?
+        return Converter._valid_formats('input_formats')
 
     @staticmethod
     def valid_output_formats():
-        formats = []
-        media_classes = subclasses(MediaObject)
-        for media_class in media_classes:
-            for output_format in media_class.output_formats:
-                formats.append(output_format)
+        return Converter._valid_formats('output_formats')
 
-        return list(set(formats))
+    @staticmethod
+    def _valid_formats(io):
+        # Retrieve all available media classes
+        media_classes = subclasses(MediaObject)
+
+        # We use a set comprehension instead of a list comprehension, so we do not duplicate items
+        formats = {input_format for media_class in media_classes for input_format in getattr(media_class, io)}
+
+        return list(formats)
 
     def retrieve_filelist(self, dirpath, subdirectories=True):
         filelist = []
